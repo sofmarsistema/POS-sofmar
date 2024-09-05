@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Search, ShoppingCart, DollarSign, Calendar, User, Package, Store, CreditCard } from 'lucide-react'
+import { Search, ShoppingCart } from 'lucide-react'
 import { 
   Box, 
   Button, 
