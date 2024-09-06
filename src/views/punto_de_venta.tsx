@@ -24,24 +24,22 @@ const sucursales = ['Central', 'Norte', 'Sur']
 const depositos = ['Principal', 'Secundario', 'Auxiliar']
 const vendedores = ['Juan Pérez', 'María González', 'Carlos Rodríguez']
 
-
 const clientes = [
-  { id: 1, nombre: 'Juan Pérez', ruc: '5566958-1' },
-  { id: 2, nombre: 'María González', ruc: '5566958-2' },
-  { id: 3, nombre: 'Carlos Rodríguez', ruc: '5566958-3' },
-  { id: 4, nombre: 'Ana Martínez', ruc: '5566958-4' },
-  { id: 5, nombre: 'Pedro Gómez', ruc: '5566958-5' },
-  { id: 6, nombre: 'Laura Benítez', ruc: '5566958-6' },
-  { id: 7, nombre: 'José López', ruc: '5566958-7' },
-  { id: 8, nombre: 'Sofía Pérez', ruc: '5566958-8' },
-  { id: 9, nombre: 'Diego González', ruc: '5566958-9' },
-  { id: 10, nombre: 'Gabriela Rodríguez', ruc: '5566958-10' },
-  { id: 11, nombre: 'Jorge Martínez', ruc: '5566958-11' },
-  { id: 12, nombre: 'Marcela Gómez', ruc: '5566958-12' },
-  { id: 13, nombre: 'Miguel Benítez', ruc: '5566958-13' },
-  { id: 14, nombre: 'Carmen López', ruc: '5566958-14' },
+  { id: 1, nombre: 'Juan Pérez', ruc: '5566958-1', lineaCredito: 1000 },
+  { id: 2, nombre: 'María González', ruc: '5566958-2', lineaCredito: 2000 },
+  { id: 3, nombre: 'Carlos Rodríguez', ruc: '5566958-3', lineaCredito: 0 },
+  { id: 4, nombre: 'Ana Martínez', ruc: '5566958-4', lineaCredito: 500 },
+  { id: 5, nombre: 'Pedro Gómez', ruc: '5566958-5', lineaCredito: 1500 },
+  { id: 6, nombre: 'Laura Benítez', ruc: '5566958-6', lineaCredito: 0 },
+  { id: 7, nombre: 'José López', ruc: '5566958-7', lineaCredito: 3000 },
+  { id: 8, nombre: 'Sofía Pérez', ruc: '5566958-8', lineaCredito: 2500 },
+  { id: 9, nombre: 'Diego González', ruc: '5566958-9', lineaCredito: 1000 },
+  { id: 10, nombre: 'Gabriela Rodríguez', ruc: '5566958-10', lineaCredito: 0 },
+  { id: 11, nombre: 'Jorge Martínez', ruc: '5566958-11', lineaCredito: 500 },
+  { id: 12, nombre: 'Marcela Gómez', ruc: '5566958-12', lineaCredito: 1000 },
+  { id: 13, nombre: 'Miguel Benítez', ruc: '5566958-13', lineaCredito: 2000 },
+  { id: 14, nombre: 'Carmen López', ruc: '5566958-14', lineaCredito: 1500 },
 ]
-
 
 const articulos = [
   { id: 1, nombre: 'Laptop HP', precio: 899.99, codigo: 'HP-001' },
@@ -49,29 +47,28 @@ const articulos = [
   { id: 3, nombre: 'Teclado Mecánico', precio: 129.99, codigo: 'RAZER-001' },
   { id: 4, nombre: 'Mouse Logitech', precio: 49.99,  codigo: 'LOGITECH-001' },
   { id: 5, nombre: 'Impresora Epson', precio: 199.99, codigo: 'EPSON-001' },
-  {id: 6, nombre: 'Silla Gamer', precio: 199.99, codigo: 'GAMER-001'},
-  {id: 7, nombre: 'Escritorio', precio: 299.99, codigo: 'DESK-001'},
-  {id: 8, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-001'},
-  {id: 9, nombre: 'Lámpara de Escritorio', precio: 29.99, codigo: 'LAMP-001'},
-  {id: 10, nombre: 'Estantería', precio: 79.99, codigo: 'SHELF-001'},
-  {id: 11, nombre: 'Cajonera', precio: 49.99, codigo: 'DRAWER-001'},
-  {id: 12, nombre: 'Mesa de Centro', precio: 99.99, codigo: 'COFFEE-001'},
-  {id: 13, nombre: 'Sofá', precio: 499.99, codigo: 'SOFA-001'},
-  {id: 14, nombre: 'Mesa de Comedor', precio: 199.99, codigo: 'DINING-001'},
-  {id: 15, nombre: 'Silla de Comedor', precio: 49.99, codigo: 'DINING-CHAIR-001'},
-  {id: 16, nombre: 'Cama', precio: 299.99, codigo: 'BED-001'},
-  {id: 17, nombre: 'Colchón', precio: 199.99, codigo: 'MATTRESS-001'},
-  {id: 18, nombre: 'Mesa de Noche', precio: 49.99, codigo: 'NIGHTSTAND-001'},
-  {id: 19, nombre: 'Armario', precio: 199.99, codigo: 'WARDROBE-001'},
-  {id: 20, nombre: 'Espejo', precio: 29.99, codigo: 'MIRROR-001'},
-  {id: 21, nombre: 'Cómoda', precio: 99.99, codigo: 'DRESSER-001'},
-  {id: 22, nombre: 'Mesa de TV', precio: 79.99, codigo: 'TV-STAND-001'},
-  {id: 23, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-CHAIR-001'},
-  {id: 24, nombre: 'Lámpara de Pie', precio: 49.99, codigo: 'FLOOR-LAMP-001'},
-  {id: 25, nombre: 'Sofá Cama', precio: 399.99, codigo: 'SOFA-BED-001'},
-  {id: 26, nombre: 'Mesa de Centro Elevable', precio: 149.99, codigo: 'COFFEE-TABLE-001'},
-  {id: 27, nombre: 'Mesa de Comedor Extensible', precio: 299.99, codigo: 'EXTENDABLE-DINING-TABLE-001'},
-
+  { id: 6, nombre: 'Silla Gamer', precio: 199.99, codigo: 'GAMER-001' },
+  { id: 7, nombre: 'Escritorio', precio: 299.99, codigo: 'DESK-001' },
+  { id: 8, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-001' },
+  { id: 9, nombre: 'Lámpara de Escritorio', precio: 29.99, codigo: 'LAMP-001' },
+  { id: 10, nombre: 'Estantería', precio: 79.99, codigo: 'SHELF-001' },
+  { id: 11, nombre: 'Cajonera', precio: 49.99, codigo: 'DRAWER-001' },
+  { id: 12, nombre: 'Mesa de Centro', precio: 99.99, codigo: 'COFFEE-001' },
+  { id: 13, nombre: 'Sofá', precio: 499.99, codigo: 'SOFA-001' },
+  { id: 14, nombre: 'Mesa de Comedor', precio: 199.99, codigo: 'DINING-001' },
+  { id: 15, nombre: 'Silla de Comedor', precio: 49.99, codigo: 'DINING-CHAIR-001' },
+  { id: 16, nombre: 'Cama', precio: 299.99, codigo: 'BED-001' },
+  { id: 17, nombre: 'Colchón', precio: 199.99, codigo: 'MATTRESS-001' },
+  { id: 18, nombre: 'Mesa de Noche', precio: 49.99, codigo: 'NIGHTSTAND-001' },
+  { id: 19, nombre: 'Armario', precio: 199.99, codigo: 'WARDROBE-001' },
+  { id: 20, nombre: 'Espejo', precio: 29.99, codigo: 'MIRROR-001' },
+  { id: 21, nombre: 'Cómoda', precio: 99.99, codigo: 'DRESSER-001' },
+  { id: 22, nombre: 'Mesa de TV', precio: 79.99, codigo: 'TV-STAND-001' },
+  { id: 23, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-CHAIR-001' },
+  { id: 24, nombre: 'Lámpara de Pie', precio: 49.99, codigo: 'FLOOR-LAMP-001' },
+  { id: 25, nombre: 'Sofá Cama', precio: 399.99, codigo: 'SOFA-BED-001' },
+  { id: 26, nombre: 'Mesa de Centro Elevable', precio: 149.99, codigo: 'COFFEE-TABLE-001' },
+  { id: 27, nombre: 'Mesa de Comedor Extensible', precio: 299.99, codigo: 'EXTENDABLE-DINING-TABLE-001' },
 ]
 
 const tasasDeCambio: { [key: string]: number } = {
@@ -81,38 +78,41 @@ const tasasDeCambio: { [key: string]: number } = {
 }
 
 export default function PuntoDeVenta() {
-  const [sucursal, setSucursal] = useState('')
-  const [deposito, setDeposito] = useState('')
+  const [sucursal, setSucursal] = useState('Central')
+  const [deposito, setDeposito] = useState('Principal')
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
-  const [moneda, setMoneda] = useState('USD')
+  const [moneda, setMoneda] = useState('PYG')
   const [vendedor, setVendedor] = useState('')
-  const [, setCliente] = useState('')
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<typeof clientes[0] | null>(null)
   const [articuloBusqueda, setArticuloBusqueda] = useState('')
   const [clienteBusqueda, setClienteBusqueda] = useState('')
   const [cantidad, setCantidad] = useState(1)
   const [items, setItems] = useState<{ id: number, nombre: string, precio: number, cantidad: number, subtotal: number }[]>([])
+  const [selectedItem, setSelectedItem] = useState<typeof articulos[0] | null>(null)
   const [condicionVenta, setCondicionVenta] = useState('Contado')
   const [notaFiscal, setNotaFiscal] = useState('Factura')
-  const [isMobile]= useMediaQuery('(max-width: 48em)')
+  const [isMobile] = useMediaQuery('(max-width: 48em)')
   const [recomendaciones, setRecomendaciones] = useState<typeof articulos>([])
-  const [recomendacionesClientes, setRecomendacionesClientes] = useState<{ id: number, nombre: string, ruc: string }[]>([])
+  const [recomendacionesClientes, setRecomendacionesClientes] = useState<typeof clientes>([])
+  const [descuentoTipo, setDescuentoTipo] = useState<'porcentaje' | 'valor'>('porcentaje')
+  const [descuentoValor, setDescuentoValor] = useState(0)
 
   const toast = useToast()
 
-
-  const agregarItem = (articuloSeleccionado: { id: number, nombre: string, precio: number }) => {
-    if (articuloSeleccionado) {
+  const agregarItem = () => {
+    if (selectedItem) {
       const nuevoItem = {
-        ...articuloSeleccionado,
+        ...selectedItem,
         cantidad,
-        subtotal: articuloSeleccionado.precio * cantidad * tasasDeCambio[moneda],
+        subtotal: selectedItem.precio * cantidad * tasasDeCambio[moneda],
       }
       setItems([...items, nuevoItem])
       setArticuloBusqueda('')
       setCantidad(1)
+      setSelectedItem(null)
     } else {
       toast({
-        title: "Artículo no encontrado",
+        title: "Artículo no seleccionado",
         status: "error",
         duration: 1000,
         isClosable: true,
@@ -121,17 +121,28 @@ export default function PuntoDeVenta() {
   }
 
   const calcularTotal = () => {
-    return items.reduce((total, item) => total + item.subtotal, 0)
+    const subtotal = items.reduce((acc, item)=> acc +item.precio *tasasDeCambio[moneda] *item.cantidad, 0);
+    let total = subtotal;
+    if(descuentoTipo === 'porcentaje'){
+      total -= (subtotal * descuentoValor)/100;
+    }else{
+      total -= descuentoValor;
+    }
+    return total.toFixed(2);
+
   }
 
   const handleBusqueda = (e: React.ChangeEvent<HTMLInputElement>) => {
     const busqueda = e.target.value
-    setArticuloBusqueda(e.target.value)
+    setArticuloBusqueda(busqueda)
 
-    if (busqueda.length>0){
-      const filteredRecomendaciones = articulos.filter((articulo)=> articulo.nombre.toLowerCase().includes(busqueda.toLowerCase())).slice(0, 5)//aumenta nro de recomendaciones
+    if (busqueda.length > 0) {
+      const filteredRecomendaciones = articulos.filter((articulo) => 
+        articulo.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+        articulo.codigo.toLowerCase().includes(busqueda.toLowerCase())
+      ).slice(0, 5)
       setRecomendaciones(filteredRecomendaciones)
-    }else{
+    } else {
       setRecomendaciones([])
     }
   }
@@ -150,31 +161,26 @@ export default function PuntoDeVenta() {
     }
   }
 
-
-  useEffect(()=> {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (!(event.target as Element).closest('.recomendaciones-menu')){
+      if (!(event.target as Element).closest('.recomendaciones-menu')) {
         setRecomendaciones([])
+        setRecomendacionesClientes([])
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
-    return ()=> {
+    return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-
-}, [])
-
-  // const filteredArticulos = articulos.filter((articulo) =>
-  //   articulo.nombre.toLowerCase().includes(articuloBusqueda.toLowerCase())
-  // )
+  }, [])
 
   return (
-    <Box maxW="5xl" mx="auto" p={isMobile? 2: 6} bg="white" shadow="xl" rounded="lg">
-      <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile? 4:6} alignItems="center" rounded="lg">
+    <Box maxW="5xl" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
+      <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile ? 4 : 6} alignItems="center" rounded="lg">
         <ShoppingCart size={24} className="mr-2" />
-        <Heading size={isMobile? 'md': 'lg'}>Punto de Venta</Heading>
+        <Heading size={isMobile ? 'md' : 'lg'}>Punto de Venta</Heading>
       </Flex>
-      <Box p={isMobile? 2:6}>
+      <Box p={isMobile ? 2 : 6}>
         <Grid templateColumns={isMobile ? "repeat(1, 1fr)" : "repeat(3, 1fr)"} gap={4} mb={6}>
           <Box>
             <FormLabel>Sucursal</FormLabel>
@@ -216,7 +222,7 @@ export default function PuntoDeVenta() {
             <FormLabel htmlFor="cliente-search">Cliente</FormLabel>
             <Input 
               id="cliente-search"
-              placeholder="Buscar cliente" 
+              placeholder="Buscar cliente por nombre o RUC" 
               value={clienteBusqueda} 
               onChange={handleBusquedaCliente}
               aria-autocomplete="list"
@@ -246,26 +252,27 @@ export default function PuntoDeVenta() {
                     cursor="pointer"
                     onClick={() => {
                       setClienteBusqueda(cliente.nombre)
-                      setCliente(cliente.nombre)
+                      setClienteSeleccionado(cliente)
                       setRecomendacionesClientes([])
                     }}
                   >
                     <Text fontWeight="bold">{cliente.nombre}</Text>
                     <Text as="span" color="gray.500" fontSize="sm">RUC: {cliente.ruc}</Text>
+                    <Text as="span" color="green.500" fontSize="sm" ml={2}>Línea de crédito: ${cliente.lineaCredito}</Text>
                   </Box>
                 ))}
               </Box>
             )}
           </Box>
         </Grid>
-        <Flex gap={4} mb={6} flexDirection={isMobile? 'column': 'row'}>
+        <Flex gap={4} mb={6} flexDirection={isMobile ? 'column' : 'row'}>
           <Box position="relative" flexGrow={1}>
             <Input 
               placeholder="Buscar artículo" 
               value={articuloBusqueda} 
               onChange={handleBusqueda}
             />
-            {recomendaciones.length>0&&(
+            {recomendaciones.length > 0 && (
               <Box
                 position={'absolute'}
                 top={'100%'}
@@ -276,21 +283,21 @@ export default function PuntoDeVenta() {
                 boxShadow={'md'}
                 borderRadius={'md'}
                 className="recomendaciones-menu"
-                >
-                  {recomendaciones.map((articulo)=>(
-                      <Box
-                        key={articulo.id}
-                        p={2}
-                        _hover={{bg: 'gray.100'}}
-                        onClick={()=> {
-                          setArticuloBusqueda(articulo.nombre)
-                          agregarItem(articulo)
-                          setRecomendaciones([])
-                        }}
-                      >
-                        {articulo.nombre} <Text as="span" color="gray.500" fontSize={'12px'}>-{articulo.codigo}</Text>
-                      </Box>
-                    ))}
+              >
+                {recomendaciones.map((articulo) => (
+                  <Box
+                    key={articulo.id}
+                    p={2}
+                    _hover={{bg: 'gray.100'}}
+                    onClick={() => {
+                      setArticuloBusqueda(articulo.nombre)
+                      setSelectedItem(articulo)
+                      setRecomendaciones([])
+                    }}
+                  >
+                    {articulo.nombre} <Text as="span" color="gray.500" fontSize={'12px'}>-{articulo.codigo}</Text>
+                  </Box>
+                ))}
               </Box>
             )}
           </Box>
@@ -299,116 +306,128 @@ export default function PuntoDeVenta() {
             placeholder="Cantidad" 
             value={cantidad} 
             onChange={(e) => setCantidad(parseInt(e.target.value))}
-            width="80px"
+            width={isMobile ? "full" : "80px"}
             min={1}
           />
-          <Button colorScheme="green" onClick={() => agregarItem(recomendaciones[0])} flexShrink={0}>
+          <Button colorScheme="green" onClick={agregarItem} flexShrink={0}>
             <Search size={20} className="mr-2" /> Agregar
           </Button>
         </Flex>
-        <Box
-          overflowX={'auto'}
-          >
-            <Table variant="striped">
-          <Thead>
-            <Tr>
-              <Th>Código</Th>
-              <Th>Descripción</Th>
-              <Th isNumeric>Precio</Th>
-              <Th isNumeric>Cantidad</Th>
-              <Th isNumeric>Subtotal</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {items.map((item, index) => (
-              <Tr key={index}>
-                <Td>{item.id}</Td>
-                <Td>{item.nombre}</Td>
-                <Td isNumeric>{(item.precio * tasasDeCambio[moneda]).toFixed(2)}</Td>
-                <Td isNumeric>{item.cantidad}</Td>
-                <Td isNumeric>{item.subtotal.toFixed(2)}</Td>
+        <Box overflowX={'auto'}>
+          <Table variant="striped">
+            <Thead>
+              <Tr>
+                <Th>Código</Th>
+                <Th>Descripción</Th>
+                <Th isNumeric>Precio</Th>
+                <Th isNumeric>Cantidad</Th>
+                <Th isNumeric>Subtotal</Th>
               </Tr>
-            ))}
-          </Tbody>
-        </Table>
-          </Box>
+            </Thead>
+            <Tbody>
+              {items.map((item, index) => (
+                <Tr key={index}>
+                  <Td>{item.id}</Td>
+                  <Td>{item.nombre}</Td>
+                  <Td isNumeric>{(item.precio * tasasDeCambio[moneda]).toFixed(0)}</Td>
+                  <Td isNumeric>{item.cantidad}</Td>
+                  <Td isNumeric>{(item.precio* tasasDeCambio[moneda] * item.cantidad).toFixed(2)}</Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </Box>
       </Box>
-      <Flex justify="space-between" p={isMobile? 2:6} bg="gray.50" rounded="lg" flexDirection={isMobile? 'column': 'row'} gap={isMobile? 4:0}>
-        <Flex
-          flexDirection={isMobile? 'column': 'row'}
-          gap={4}
-          >
+      <Flex justify="space-between" p={isMobile ? 2 : 6} bg="gray.50" rounded="lg" flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 4 : 0}>
+        <Flex flexDirection={isMobile ? 'column' : 'row'} gap={4}>
           <Box>
             <Text fontWeight={'bold'} mb={2}>Condición de Venta</Text>
-            <Flex
-              flexDir={isMobile? 'column': 'row'}
-              gap={2}
-              >
+            <Flex flexDir={isMobile ? 'column' : 'row'} gap={2}>
               <Button 
-                  variant={condicionVenta === 'Contado' ? 'solid' : 'outline'}
-                  bg={condicionVenta === 'Contado' ? 'blue.500' : 'transparent'}
-                  color={condicionVenta === 'Contado' ? 'white' : 'blue.500'}
-                  borderColor="blue.500"
-                  _hover={{
-                    bg: condicionVenta === 'Contado' ? 'blue.600' : 'blue.50',
-                  }}
-                  onClick={() => setCondicionVenta('Contado')}
-                  width={isMobile ? "full" : "auto"}
-                >
-                  Contado
+                variant={condicionVenta === 'Contado' ? 'solid' : 'outline'}
+                bg={condicionVenta === 'Contado' ? 'blue.500' : 'transparent'}
+                color={condicionVenta === 'Contado' ? 'white' : 'blue.500'}
+                borderColor="blue.500"
+                _hover={{
+                  bg: condicionVenta === 'Contado' ? 'blue.600' : 'blue.50',
+                }}
+                onClick={() => setCondicionVenta('Contado')}
+                width={isMobile ? "full" : "auto"}
+              >
+                Contado
               </Button>
               <Button 
-                  variant={condicionVenta === 'Crédito' ? 'solid' : 'outline'}
-                  bg={condicionVenta === 'Crédito' ? 'blue.500' : 'transparent'}
-                  color={condicionVenta === 'Crédito' ? 'white' : 'blue.500'}
-                  borderColor="blue.500"
-                  _hover={{
-                    bg: condicionVenta === 'Crédito' ? 'blue.600' : 'blue.50',
-                  }}
-                  onClick={() => setCondicionVenta('Crédito')}
-                  width={isMobile ? "full" : "auto"}
-                >
-                  Crédito
-                </Button>
+                variant={condicionVenta === 'Crédito' ? 'solid' : 'outline'}
+                bg={condicionVenta === 'Crédito' ? 'blue.500' : 'transparent'}
+                color={condicionVenta === 'Crédito' ? 'white' : 'blue.500'}
+                borderColor="blue.500"
+                _hover={{
+                  bg: condicionVenta === 'Crédito' ? 'blue.600' : 'blue.50',
+                }}
+                onClick={() => setCondicionVenta('Crédito')}
+                width={isMobile ? "full" : "auto"}
+                isDisabled={!clienteSeleccionado || clienteSeleccionado.lineaCredito === 0}
+              >
+                Crédito
+              </Button>
             </Flex>
           </Box>
           <Box>
-      <Text fontWeight="bold" mb={2}>
-        Nota Fiscal
-      </Text>
-      <Flex flexDirection={isMobile ? 'column' : 'row'} gap={2}>
-        <Button 
-          variant={notaFiscal === 'Factura' ? 'solid' : 'outline'}
-          bg={notaFiscal === 'Factura' ? 'blue.500' : 'transparent'}
-          color={notaFiscal === 'Factura' ? 'white' : 'blue.500'}
-          borderColor="blue.500"
-          _hover={{
-            bg: notaFiscal === 'Factura' ? 'blue.600' : 'blue.50',
-          }}
-          onClick={() => setNotaFiscal('Factura')}
-          width={isMobile ? "full" : "auto"}
-        >
-          Factura
-        </Button>
-        <Button 
-          variant={notaFiscal === 'Boleta' ? 'solid' : 'outline'}
-          bg={notaFiscal === 'Boleta' ? 'blue.500' : 'transparent'}
-          color={notaFiscal === 'Boleta' ? 'white' : 'blue.500'}
-          borderColor="blue.500"
-          _hover={{
-            bg: notaFiscal === 'Boleta' ? 'blue.600' : 'blue.50',
-          }}
-          onClick={() => setNotaFiscal('Boleta')}
-          width={isMobile ? "full" : "auto"}
-        >
-          Boleta
-        </Button>
-      </Flex>
-    </Box>
+            <Text fontWeight="bold" mb={2}>Nota Fiscal</Text>
+            <Flex flexDirection={isMobile ? 'column' : 'row'} gap={2}>
+              <Button 
+                variant={notaFiscal === 'Factura' ? 'solid' : 'outline'}
+                bg={notaFiscal === 'Factura' ? 'blue.500' : 'transparent'}
+                color={notaFiscal === 'Factura' ? 'white' : 'blue.500'}
+                borderColor="blue.500"
+                _hover={{
+                  bg: notaFiscal === 'Factura' ? 'blue.600' : 'blue.50',
+                }}
+                onClick={() => setNotaFiscal('Factura')}
+                width={isMobile ? "full" : "auto"}
+              >
+                Factura
+              </Button>
+              <Button 
+                variant={notaFiscal === 'Boleta' ? 'solid' : 'outline'}
+                bg={notaFiscal === 'Boleta' ? 'blue.500' : 'transparent'}
+                color={notaFiscal === 'Boleta' ? 'white' : 'blue.500'}
+                borderColor="blue.500"
+                _hover={{
+                  bg: notaFiscal === 'Boleta' ? 'blue.600' : 'blue.50',
+                }}
+                onClick={() => setNotaFiscal('Boleta')}
+                width={isMobile ? "full" : "auto"}
+              >
+                Boleta
+              </Button>
+            </Flex>
+          </Box>
         </Flex>
-        <Box textAlign="right">
-          <Text fontSize="lg" fontWeight="bold">Total: {calcularTotal().toFixed(2)} {moneda}</Text>
-          <Button colorScheme="blue" mt={4}>Finalizar Venta</Button>
+        <Flex mt={isMobile ? 4 : 0} gap={4} flexDirection={isMobile? 'row': 'column'} alignItems={'center'}>
+        <Text fontSize="lg" fontWeight={'bold'}>Descuento</Text>
+          <Select value={descuentoTipo}
+                  onChange={(e)=> {
+                    setDescuentoTipo(e.target.value as 'porcentaje' | 'valor')
+                    setDescuentoValor(0)
+                  }} width={'150px'}>
+                    <option value="porcentaje">Porcentaje</option>
+                    <option value="monto">Monto</option>
+                  </Select>
+                  <Input
+                    type='number'
+                    placeholder='Descuento'
+                    value={descuentoValor}
+                    onChange={(e)=> setDescuentoValor(parseInt(e.target.value))}
+                    width={'150px'}
+                    ml={2}
+                  />
+        </Flex>
+        <Box textAlign={isMobile ? "left" : "right"}>
+          <Text fontSize="lg" fontWeight="bold">Subtotal: ${items.reduce((acc, item) => acc + item.precio * item.cantidad * tasasDeCambio[moneda], 0).toFixed(0)}</Text>
+          <Text fontSize="lg" fontWeight="bold">Descuento: {descuentoTipo === 'porcentaje' ? `${descuentoValor}%` : `$${descuentoValor}`}</Text>
+          <Text fontSize="lg" fontWeight="bold">Total: ${Number(calcularTotal()).toFixed(0)}</Text>
+          <Button colorScheme="blue" mt={4} width={isMobile ? "full" : "auto"}>Finalizar Venta</Button>
         </Box>
       </Flex>
     </Box>
