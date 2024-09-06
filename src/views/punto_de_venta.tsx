@@ -105,9 +105,9 @@ export default function PuntoDeVenta() {
 
 }, [])
 
-  const filteredArticulos = articulos.filter((articulo) =>
-    articulo.nombre.toLowerCase().includes(articuloBusqueda.toLowerCase())
-  )
+  // const filteredArticulos = articulos.filter((articulo) =>
+  //   articulo.nombre.toLowerCase().includes(articuloBusqueda.toLowerCase())
+  // )
 
   return (
     <Box maxW="5xl" mx="auto" p={isMobile? 2: 6} bg="white" shadow="xl" rounded="lg">
