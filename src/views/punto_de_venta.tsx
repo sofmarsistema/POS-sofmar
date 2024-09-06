@@ -22,7 +22,14 @@ import {
 
 const sucursales = ['Central', 'Norte', 'Sur']
 const depositos = ['Principal', 'Secundario', 'Auxiliar']
-const vendedores = ['Juan Pérez', 'María González', 'Carlos Rodríguez']
+const vendedores = [
+  { id: 1, nombre: 'Juan Pérez', codigo:'001' },
+  { id: 2, nombre: 'María González', codigo:'002' },
+  { id: 3, nombre: 'Carlos Rodríguez', codigo:'003' },
+  { id: 4, nombre: 'Ana Martínez', codigo:'004' },
+  { id: 5, nombre: 'Pedro Gómez', codigo:'005' },
+  { id: 6, nombre: 'Laura Benítez', codigo:'006' },
+]
 
 const clientes = [
   { id: 1, nombre: 'Juan Pérez', ruc: '5566958-1', lineaCredito: 1000 },
@@ -82,7 +89,7 @@ export default function PuntoDeVenta() {
   const [deposito, setDeposito] = useState('Principal')
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [moneda, setMoneda] = useState('PYG')
-  const [vendedor, setVendedor] = useState('')
+  const [, setVendedor] = useState('')
   const [clienteSeleccionado, setClienteSeleccionado] = useState<typeof clientes[0] | null>(null)
   const [articuloBusqueda, setArticuloBusqueda] = useState('')
   const [clienteBusqueda, setClienteBusqueda] = useState('')
@@ -96,6 +103,8 @@ export default function PuntoDeVenta() {
   const [recomendacionesClientes, setRecomendacionesClientes] = useState<typeof clientes>([])
   const [descuentoTipo, setDescuentoTipo] = useState<'porcentaje' | 'valor'>('porcentaje')
   const [descuentoValor, setDescuentoValor] = useState(0)
+  const [buscarVendedor, setBuscarVendedor] = useState('')
+  const [recomedacionesVendedores, setRecomendacionesVendedores] = useState<typeof vendedores>([])
 
   const toast = useToast()
 
@@ -161,6 +170,23 @@ export default function PuntoDeVenta() {
     }
   }
 
+  const handleBusquedaVendedor = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const busquedaVendedor = e.target.value
+    setBuscarVendedor(busquedaVendedor)
+    if(busquedaVendedor.length > 0){
+      const filteredVendedores = vendedores.filter((vendedor) => 
+        vendedor.nombre.toLowerCase().includes(busquedaVendedor.toLowerCase()) ||
+        vendedor.codigo.includes(busquedaVendedor)
+      ).slice(0, 5)
+      setRecomendacionesVendedores(filteredVendedores)
+      if (filteredVendedores.length > 0) {
+        setVendedor(filteredVendedores[0].nombre)
+      }
+  }else{
+    setRecomendacionesVendedores([])
+  }
+}
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (!(event.target as Element).closest('.recomendaciones-menu')) {
@@ -210,13 +236,50 @@ export default function PuntoDeVenta() {
               <option value="PYG">PYG</option>
             </Select>
           </Box>
-          <Box>
+          <Box position={'relative'}>
             <FormLabel>Vendedor</FormLabel>
-            <Select placeholder="Seleccionar vendedor" value={vendedor} onChange={(e) => setVendedor(e.target.value)}>
-              {vendedores.map((vendedor) => (
-                <option key={vendedor} value={vendedor}>{vendedor}</option>
-              ))}
-            </Select>
+            <Input
+              id='vendedor-search'
+              placeholder="Buscar vendedor por código"
+              value={buscarVendedor}
+              onChange={handleBusquedaVendedor}
+              aria-autocomplete="list"
+              aria-controls="vendedor-recommendations"
+            />
+            {recomedacionesVendedores.length>0&&(
+              <Box
+              id="vendedor-recommendations"
+              position="absolute"
+              top="100%"
+              left={0}
+              right={0}
+              zIndex={20}
+              bg="white"
+              boxShadow="md"
+              borderRadius="md"
+              mt={1}
+              className="recomendaciones-menu"
+              maxH="200px"
+              overflowY="auto"
+              >
+                {recomedacionesVendedores.map((vendedor) => (
+                  <Box
+                    key={vendedor.id}
+                    p={2}
+                    _hover={{ bg: 'gray.100' }}
+                    cursor="pointer"
+                    onClick={() => {
+                      setBuscarVendedor(vendedor.codigo)
+                      setVendedor(vendedor.nombre)
+                      setRecomendacionesVendedores([])
+                    }}
+                  >
+                    <Text fontWeight="bold">{vendedor.nombre}</Text>
+                    <Text as="span" color="gray.500" fontSize="sm">Código: {vendedor.codigo}</Text>
+                  </Box>
+                ))}
+              </Box>
+            )}
           </Box>
           <Box position="relative">
             <FormLabel htmlFor="cliente-search">Cliente</FormLabel>
