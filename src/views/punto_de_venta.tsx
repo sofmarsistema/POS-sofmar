@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Search, ShoppingCart } from 'lucide-react'
 import { 
   Box, 
@@ -17,10 +17,7 @@ import {
   Heading, 
   useToast, 
   Text, 
-  Menu, 
-  MenuButton, 
-  MenuList, 
-  MenuItem 
+  useMediaQuery
 } from '@chakra-ui/react'
 
 const sucursales = ['Central', 'Norte', 'Sur']
@@ -53,8 +50,11 @@ export default function PuntoDeVenta() {
   const [items, setItems] = useState<{ id: number, nombre: string, precio: number, cantidad: number, subtotal: number }[]>([])
   const [condicionVenta, setCondicionVenta] = useState('Contado')
   const [notaFiscal, setNotaFiscal] = useState('Factura')
+  const [isMobile]= useMediaQuery('(max-width: 48em)')
+  const [recomendaciones, setRecomendaciones] = useState<typeof articulos>([])
 
   const toast = useToast()
+
 
   const agregarItem = (articuloSeleccionado: { id: number, nombre: string, precio: number }) => {
     if (articuloSeleccionado) {
@@ -81,21 +81,42 @@ export default function PuntoDeVenta() {
   }
 
   const handleBusqueda = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const busqueda = e.target.value
     setArticuloBusqueda(e.target.value)
+
+    if (busqueda.length>0){
+      const filteredRecomendaciones = articulos.filter((articulo)=> articulo.nombre.toLowerCase().includes(busqueda.toLowerCase())).slice(0, 3)
+      setRecomendaciones(filteredRecomendaciones)
+    }else{
+      setRecomendaciones([])
+    }
   }
+
+  useEffect(()=> {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target as Element).closest('.recomendaciones-menu')){
+        setRecomendaciones([])
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return ()=> {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+
+}, [])
 
   const filteredArticulos = articulos.filter((articulo) =>
     articulo.nombre.toLowerCase().includes(articuloBusqueda.toLowerCase())
   )
 
   return (
-    <Box maxW="5xl" mx="auto" p={6} bg="white" shadow="xl" rounded="lg">
-      <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={6} alignItems="center" rounded="lg">
+    <Box maxW="5xl" mx="auto" p={isMobile? 2: 6} bg="white" shadow="xl" rounded="lg">
+      <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile? 4:6} alignItems="center" rounded="lg">
         <ShoppingCart size={24} className="mr-2" />
-        <Heading size="lg">Punto de Venta</Heading>
+        <Heading size={isMobile? 'md': 'lg'}>Punto de Venta</Heading>
       </Flex>
-      <Box p={6}>
-        <Grid templateColumns="repeat(3, 1fr)" gap={4} mb={6}>
+      <Box p={isMobile? 2:6}>
+        <Grid templateColumns={isMobile ? "repeat(1, 1fr)" : "repeat(3, 1fr)"} gap={4} mb={6}>
           <Box>
             <FormLabel>Sucursal</FormLabel>
             <Select placeholder="Seleccionar sucursal" value={sucursal} onChange={(e) => setSucursal(e.target.value)}>
@@ -141,31 +162,40 @@ export default function PuntoDeVenta() {
             </Select>
           </Box>
         </Grid>
-        <Flex gap={4} mb={6}>
+        <Flex gap={4} mb={6} flexDirection={isMobile? 'column': 'row'}>
           <Box position="relative" flexGrow={1}>
             <Input 
               placeholder="Buscar artículo" 
               value={articuloBusqueda} 
               onChange={handleBusqueda}
             />
-            {articuloBusqueda && filteredArticulos.length > 0 && (
-              <Menu>
-                <MenuButton as={Box} position="absolute" top="100%" left={0} zIndex={1} width="100%">
-                  <MenuList>
-                    {filteredArticulos.map((articulo) => (
-                      <MenuItem
+            {recomendaciones.length>0&&(
+              <Box
+                position={'absolute'}
+                top={'100%'}
+                left={0}
+                zIndex={1}
+                width={'100%'}
+                bg={'white'}
+                boxShadow={'md'}
+                borderRadius={'md'}
+                className="recomendaciones-menu"
+                >
+                  {recomendaciones.map((articulo)=>(
+                      <Box
                         key={articulo.id}
-                        onClick={() => {
+                        p={2}
+                        _hover={{bg: 'gray.100'}}
+                        onClick={()=> {
                           setArticuloBusqueda(articulo.nombre)
                           agregarItem(articulo)
+                          setRecomendaciones([])
                         }}
                       >
                         {articulo.nombre}
-                      </MenuItem>
+                      </Box>
                     ))}
-                  </MenuList>
-                </MenuButton>
-              </Menu>
+              </Box>
             )}
           </Box>
           <Input 
@@ -176,11 +206,14 @@ export default function PuntoDeVenta() {
             width="80px"
             min={1}
           />
-          <Button colorScheme="green" onClick={() => agregarItem(filteredArticulos[0])}>
+          <Button colorScheme="green" onClick={() => agregarItem(recomendaciones[0])} flexShrink={0}>
             <Search size={20} className="mr-2" /> Agregar
           </Button>
         </Flex>
-        <Table variant="striped">
+        <Box
+          overflowX={'auto'}
+          >
+            <Table variant="striped">
           <Thead>
             <Tr>
               <Th>Código</Th>
@@ -202,22 +235,81 @@ export default function PuntoDeVenta() {
             ))}
           </Tbody>
         </Table>
+          </Box>
       </Box>
-      <Flex justify="space-between" p={6} bg="gray.50" rounded="lg">
-        <Box>
-          <Button variant={condicionVenta === 'Contado' ? 'solid' : 'outline'} onClick={() => setCondicionVenta('Contado')}>
-            Contado
-          </Button>
-          <Button ml={2} variant={condicionVenta === 'Crédito' ? 'solid' : 'outline'} onClick={() => setCondicionVenta('Crédito')}>
-            Crédito
-          </Button>
-          <Button ml={4} variant={notaFiscal === 'Factura' ? 'solid' : 'outline'} onClick={() => setNotaFiscal('Factura')}>
-            Factura
-          </Button>
-          <Button ml={2} variant={notaFiscal === 'Boleta' ? 'solid' : 'outline'} onClick={() => setNotaFiscal('Boleta')}>
-            Boleta
-          </Button>
-        </Box>
+      <Flex justify="space-between" p={isMobile? 2:6} bg="gray.50" rounded="lg" flexDirection={isMobile? 'column': 'row'} gap={isMobile? 4:0}>
+        <Flex
+          flexDirection={isMobile? 'column': 'row'}
+          gap={4}
+          >
+          <Box>
+            <Text fontWeight={'bold'} mb={2}>Condición de Venta</Text>
+            <Flex
+              flexDir={isMobile? 'column': 'row'}
+              gap={2}
+              >
+              <Button 
+                  variant={condicionVenta === 'Contado' ? 'solid' : 'outline'}
+                  bg={condicionVenta === 'Contado' ? 'blue.500' : 'transparent'}
+                  color={condicionVenta === 'Contado' ? 'white' : 'blue.500'}
+                  borderColor="blue.500"
+                  _hover={{
+                    bg: condicionVenta === 'Contado' ? 'blue.600' : 'blue.50',
+                  }}
+                  onClick={() => setCondicionVenta('Contado')}
+                  width={isMobile ? "full" : "auto"}
+                >
+                  Contado
+              </Button>
+              <Button 
+                  variant={condicionVenta === 'Crédito' ? 'solid' : 'outline'}
+                  bg={condicionVenta === 'Crédito' ? 'blue.500' : 'transparent'}
+                  color={condicionVenta === 'Crédito' ? 'white' : 'blue.500'}
+                  borderColor="blue.500"
+                  _hover={{
+                    bg: condicionVenta === 'Crédito' ? 'blue.600' : 'blue.50',
+                  }}
+                  onClick={() => setCondicionVenta('Crédito')}
+                  width={isMobile ? "full" : "auto"}
+                >
+                  Crédito
+                </Button>
+            </Flex>
+          </Box>
+          <Box>
+      <Text fontWeight="bold" mb={2}>
+        Nota Fiscal
+      </Text>
+      <Flex flexDirection={isMobile ? 'column' : 'row'} gap={2}>
+        <Button 
+          variant={notaFiscal === 'Factura' ? 'solid' : 'outline'}
+          bg={notaFiscal === 'Factura' ? 'blue.500' : 'transparent'}
+          color={notaFiscal === 'Factura' ? 'white' : 'blue.500'}
+          borderColor="blue.500"
+          _hover={{
+            bg: notaFiscal === 'Factura' ? 'blue.600' : 'blue.50',
+          }}
+          onClick={() => setNotaFiscal('Factura')}
+          width={isMobile ? "full" : "auto"}
+        >
+          Factura
+        </Button>
+        <Button 
+          variant={notaFiscal === 'Boleta' ? 'solid' : 'outline'}
+          bg={notaFiscal === 'Boleta' ? 'blue.500' : 'transparent'}
+          color={notaFiscal === 'Boleta' ? 'white' : 'blue.500'}
+          borderColor="blue.500"
+          _hover={{
+            bg: notaFiscal === 'Boleta' ? 'blue.600' : 'blue.50',
+          }}
+          onClick={() => setNotaFiscal('Boleta')}
+          width={isMobile ? "full" : "auto"}
+        >
+          Boleta
+        </Button>
+      </Flex>
+    </Box>
+        </Flex>
         <Box textAlign="right">
           <Text fontSize="lg" fontWeight="bold">Total: {calcularTotal().toFixed(2)} {moneda}</Text>
           <Button colorScheme="blue" mt={4}>Finalizar Venta</Button>
