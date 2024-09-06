@@ -23,13 +23,55 @@ import {
 const sucursales = ['Central', 'Norte', 'Sur']
 const depositos = ['Principal', 'Secundario', 'Auxiliar']
 const vendedores = ['Juan Pérez', 'María González', 'Carlos Rodríguez']
-const clientes = ['Cliente 1', 'Cliente 2', 'Cliente 3']
+
+
+const clientes = [
+  { id: 1, nombre: 'Juan Pérez', ruc: '5566958-1' },
+  { id: 2, nombre: 'María González', ruc: '5566958-2' },
+  { id: 3, nombre: 'Carlos Rodríguez', ruc: '5566958-3' },
+  { id: 4, nombre: 'Ana Martínez', ruc: '5566958-4' },
+  { id: 5, nombre: 'Pedro Gómez', ruc: '5566958-5' },
+  { id: 6, nombre: 'Laura Benítez', ruc: '5566958-6' },
+  { id: 7, nombre: 'José López', ruc: '5566958-7' },
+  { id: 8, nombre: 'Sofía Pérez', ruc: '5566958-8' },
+  { id: 9, nombre: 'Diego González', ruc: '5566958-9' },
+  { id: 10, nombre: 'Gabriela Rodríguez', ruc: '5566958-10' },
+  { id: 11, nombre: 'Jorge Martínez', ruc: '5566958-11' },
+  { id: 12, nombre: 'Marcela Gómez', ruc: '5566958-12' },
+  { id: 13, nombre: 'Miguel Benítez', ruc: '5566958-13' },
+  { id: 14, nombre: 'Carmen López', ruc: '5566958-14' },
+]
+
+
 const articulos = [
-  { id: 1, nombre: 'Laptop HP', precio: 899.99 },
-  { id: 2, nombre: 'Monitor Dell 27"', precio: 299.99 },
-  { id: 3, nombre: 'Teclado Mecánico', precio: 129.99 },
-  { id: 4, nombre: 'Mouse Logitech', precio: 49.99 },
-  { id: 5, nombre: 'Impresora Epson', precio: 199.99 },
+  { id: 1, nombre: 'Laptop HP', precio: 899.99, codigo: 'HP-001' },
+  { id: 2, nombre: 'Monitor Dell 27"', precio: 299.99, codigo: 'DELL-001' },
+  { id: 3, nombre: 'Teclado Mecánico', precio: 129.99, codigo: 'RAZER-001' },
+  { id: 4, nombre: 'Mouse Logitech', precio: 49.99,  codigo: 'LOGITECH-001' },
+  { id: 5, nombre: 'Impresora Epson', precio: 199.99, codigo: 'EPSON-001' },
+  {id: 6, nombre: 'Silla Gamer', precio: 199.99, codigo: 'GAMER-001'},
+  {id: 7, nombre: 'Escritorio', precio: 299.99, codigo: 'DESK-001'},
+  {id: 8, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-001'},
+  {id: 9, nombre: 'Lámpara de Escritorio', precio: 29.99, codigo: 'LAMP-001'},
+  {id: 10, nombre: 'Estantería', precio: 79.99, codigo: 'SHELF-001'},
+  {id: 11, nombre: 'Cajonera', precio: 49.99, codigo: 'DRAWER-001'},
+  {id: 12, nombre: 'Mesa de Centro', precio: 99.99, codigo: 'COFFEE-001'},
+  {id: 13, nombre: 'Sofá', precio: 499.99, codigo: 'SOFA-001'},
+  {id: 14, nombre: 'Mesa de Comedor', precio: 199.99, codigo: 'DINING-001'},
+  {id: 15, nombre: 'Silla de Comedor', precio: 49.99, codigo: 'DINING-CHAIR-001'},
+  {id: 16, nombre: 'Cama', precio: 299.99, codigo: 'BED-001'},
+  {id: 17, nombre: 'Colchón', precio: 199.99, codigo: 'MATTRESS-001'},
+  {id: 18, nombre: 'Mesa de Noche', precio: 49.99, codigo: 'NIGHTSTAND-001'},
+  {id: 19, nombre: 'Armario', precio: 199.99, codigo: 'WARDROBE-001'},
+  {id: 20, nombre: 'Espejo', precio: 29.99, codigo: 'MIRROR-001'},
+  {id: 21, nombre: 'Cómoda', precio: 99.99, codigo: 'DRESSER-001'},
+  {id: 22, nombre: 'Mesa de TV', precio: 79.99, codigo: 'TV-STAND-001'},
+  {id: 23, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-CHAIR-001'},
+  {id: 24, nombre: 'Lámpara de Pie', precio: 49.99, codigo: 'FLOOR-LAMP-001'},
+  {id: 25, nombre: 'Sofá Cama', precio: 399.99, codigo: 'SOFA-BED-001'},
+  {id: 26, nombre: 'Mesa de Centro Elevable', precio: 149.99, codigo: 'COFFEE-TABLE-001'},
+  {id: 27, nombre: 'Mesa de Comedor Extensible', precio: 299.99, codigo: 'EXTENDABLE-DINING-TABLE-001'},
+
 ]
 
 const tasasDeCambio: { [key: string]: number } = {
@@ -44,14 +86,16 @@ export default function PuntoDeVenta() {
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [moneda, setMoneda] = useState('USD')
   const [vendedor, setVendedor] = useState('')
-  const [cliente, setCliente] = useState('')
+  const [, setCliente] = useState('')
   const [articuloBusqueda, setArticuloBusqueda] = useState('')
+  const [clienteBusqueda, setClienteBusqueda] = useState('')
   const [cantidad, setCantidad] = useState(1)
   const [items, setItems] = useState<{ id: number, nombre: string, precio: number, cantidad: number, subtotal: number }[]>([])
   const [condicionVenta, setCondicionVenta] = useState('Contado')
   const [notaFiscal, setNotaFiscal] = useState('Factura')
   const [isMobile]= useMediaQuery('(max-width: 48em)')
   const [recomendaciones, setRecomendaciones] = useState<typeof articulos>([])
+  const [recomendacionesClientes, setRecomendacionesClientes] = useState<{ id: number, nombre: string, ruc: string }[]>([])
 
   const toast = useToast()
 
@@ -70,7 +114,7 @@ export default function PuntoDeVenta() {
       toast({
         title: "Artículo no encontrado",
         status: "error",
-        duration: 3000,
+        duration: 1000,
         isClosable: true,
       })
     }
@@ -85,12 +129,27 @@ export default function PuntoDeVenta() {
     setArticuloBusqueda(e.target.value)
 
     if (busqueda.length>0){
-      const filteredRecomendaciones = articulos.filter((articulo)=> articulo.nombre.toLowerCase().includes(busqueda.toLowerCase())).slice(0, 3)
+      const filteredRecomendaciones = articulos.filter((articulo)=> articulo.nombre.toLowerCase().includes(busqueda.toLowerCase())).slice(0, 5)//aumenta nro de recomendaciones
       setRecomendaciones(filteredRecomendaciones)
     }else{
       setRecomendaciones([])
     }
   }
+
+  const handleBusquedaCliente = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const busquedaCliente = e.target.value
+    setClienteBusqueda(busquedaCliente)
+    if (busquedaCliente.length > 0) {
+      const filteredRecomendacionesClientes = clientes.filter((cliente) => 
+        cliente.nombre.toLowerCase().includes(busquedaCliente.toLowerCase()) ||
+        cliente.ruc.includes(busquedaCliente)
+      ).slice(0, 5)
+      setRecomendacionesClientes(filteredRecomendacionesClientes)
+    } else {
+      setRecomendacionesClientes([])
+    }
+  }
+
 
   useEffect(()=> {
     const handleClickOutside = (event: MouseEvent) => {
@@ -153,13 +212,50 @@ export default function PuntoDeVenta() {
               ))}
             </Select>
           </Box>
-          <Box>
-            <FormLabel>Cliente</FormLabel>
-            <Select placeholder="Seleccionar cliente" value={cliente} onChange={(e) => setCliente(e.target.value)}>
-              {clientes.map((cliente) => (
-                <option key={cliente} value={cliente}>{cliente}</option>
-              ))}
-            </Select>
+          <Box position="relative">
+            <FormLabel htmlFor="cliente-search">Cliente</FormLabel>
+            <Input 
+              id="cliente-search"
+              placeholder="Buscar cliente" 
+              value={clienteBusqueda} 
+              onChange={handleBusquedaCliente}
+              aria-autocomplete="list"
+              aria-controls="cliente-recommendations"
+            />
+            {recomendacionesClientes.length > 0 && (
+              <Box
+                id="cliente-recommendations"
+                position="absolute"
+                top="100%"
+                left={0}
+                right={0}
+                zIndex={10}
+                bg="white"
+                boxShadow="md"
+                borderRadius="md"
+                mt={1}
+                className="recomendaciones-menu"
+                maxH="200px"
+                overflowY="auto"
+              >
+                {recomendacionesClientes.map((cliente) => (
+                  <Box
+                    key={cliente.id}
+                    p={2}
+                    _hover={{ bg: 'gray.100' }}
+                    cursor="pointer"
+                    onClick={() => {
+                      setClienteBusqueda(cliente.nombre)
+                      setCliente(cliente.nombre)
+                      setRecomendacionesClientes([])
+                    }}
+                  >
+                    <Text fontWeight="bold">{cliente.nombre}</Text>
+                    <Text as="span" color="gray.500" fontSize="sm">RUC: {cliente.ruc}</Text>
+                  </Box>
+                ))}
+              </Box>
+            )}
           </Box>
         </Grid>
         <Flex gap={4} mb={6} flexDirection={isMobile? 'column': 'row'}>
@@ -192,7 +288,7 @@ export default function PuntoDeVenta() {
                           setRecomendaciones([])
                         }}
                       >
-                        {articulo.nombre}
+                        {articulo.nombre} <Text as="span" color="gray.500" fontSize={'12px'}>-{articulo.codigo}</Text>
                       </Box>
                     ))}
               </Box>
