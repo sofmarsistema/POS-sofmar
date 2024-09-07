@@ -17,7 +17,10 @@ import {
   Heading, 
   useToast, 
   Text, 
-  useMediaQuery
+  useMediaQuery,
+  CheckboxGroup,
+  Checkbox,
+  Stack
 } from '@chakra-ui/react'
 
 const sucursales = ['Central', 'Norte', 'Sur']
@@ -94,7 +97,7 @@ export default function PuntoDeVenta() {
   const [articuloBusqueda, setArticuloBusqueda] = useState('')
   const [clienteBusqueda, setClienteBusqueda] = useState('')
   const [cantidad, setCantidad] = useState(1)
-  const [items, setItems] = useState<{ id: number, nombre: string, precio: number, cantidad: number, subtotal: number }[]>([])
+  const [items, setItems] = useState<{ id: number, nombre: string, precioUnitario: number, cantidad: number, subtotal: number, impuesto: number, precioOriginal: number}[]>([])
   const [selectedItem, setSelectedItem] = useState<typeof articulos[0] | null>(null)
   const [condicionVenta, setCondicionVenta] = useState('Contado')
   const [notaFiscal, setNotaFiscal] = useState('Factura')
@@ -105,15 +108,43 @@ export default function PuntoDeVenta() {
   const [descuentoValor, setDescuentoValor] = useState(0)
   const [buscarVendedor, setBuscarVendedor] = useState('')
   const [recomedacionesVendedores, setRecomendacionesVendedores] = useState<typeof vendedores>([])
+  const [impuestos, setImpuestos]= useState<string[]>([])
 
   const toast = useToast()
 
+  const formatCurrency = (amount: number) => {
+    const currencySymbol : {[key: string] :string} = {
+      USD: '$',
+      BRL: 'R$',
+      PYG: '₲',
+    };
+
+    return new Intl.NumberFormat('es-PY', {
+      style: 'currency',
+      currency: moneda,
+      currencyDisplay: 'narrowSymbol'
+    }).format(amount).replace(/\s/g, '').replace(moneda, currencySymbol[moneda]);
+    }
+
+  const calcularImpuesto = (precio: number)=>{
+    let impuesto = 0;
+    if (impuestos.includes('5%')) impuesto += precio * 0.05;
+    if (impuestos.includes('10%')) impuesto += precio * 0.1;
+    return impuesto;
+  }
+
   const agregarItem = () => {
     if (selectedItem) {
+      const precioEnMonedaActual = selectedItem.precio * tasasDeCambio[moneda]
+      const impuesto = calcularImpuesto(precioEnMonedaActual)
       const nuevoItem = {
-        ...selectedItem,
+        id: selectedItem.id,
+        nombre: selectedItem.nombre,
+        precioOriginal: selectedItem.precio,
+        precioUnitario: precioEnMonedaActual,
         cantidad,
-        subtotal: selectedItem.precio * cantidad * tasasDeCambio[moneda],
+        impuesto: impuesto * cantidad,
+        subtotal: (precioEnMonedaActual + impuesto) * cantidad,
       }
       setItems([...items, nuevoItem])
       setArticuloBusqueda('')
@@ -130,15 +161,14 @@ export default function PuntoDeVenta() {
   }
 
   const calcularTotal = () => {
-    const subtotal = items.reduce((acc, item)=> acc +item.precio *tasasDeCambio[moneda] *item.cantidad, 0);
+    const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
     let total = subtotal;
     if(descuentoTipo === 'porcentaje'){
-      total -= (subtotal * descuentoValor)/100;
-    }else{
-      total -= descuentoValor;
+      total -= (subtotal * descuentoValor) / 100;
+    } else {
+      total -= descuentoValor * tasasDeCambio[moneda];
     }
-    return total.toFixed(2);
-
+    return total;
   }
 
   const handleBusqueda = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,8 +230,22 @@ export default function PuntoDeVenta() {
     }
   }, [])
 
+  useEffect(() => {
+    setItems(prevItems => prevItems.map(item => {
+      const precioEnMonedaActual = item.precioOriginal * tasasDeCambio[moneda]
+      const impuesto = calcularImpuesto(precioEnMonedaActual)
+      return {
+        ...item,
+        precioUnitario: precioEnMonedaActual,
+        impuesto: impuesto * item.cantidad,
+        subtotal: (precioEnMonedaActual + impuesto) * item.cantidad,
+      }
+    })
+    )
+  })
+
   return (
-    <Box maxW="5xl" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
+    <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
       <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile ? 4 : 6} alignItems="center" rounded="lg">
         <ShoppingCart size={24} className="mr-2" />
         <Heading size={isMobile ? 'md' : 'lg'}>Punto de Venta</Heading>
@@ -235,6 +279,16 @@ export default function PuntoDeVenta() {
               <option value="BRL">BRL</option>
               <option value="PYG">PYG</option>
             </Select>
+          </Box>
+          <Box>
+            <FormLabel>Impuestos</FormLabel>
+            <CheckboxGroup colorScheme='green' defaultValue={impuestos} onChange={(values: string[]) => setImpuestos(values)}>
+              <Stack spacing={[1, 5]} direction={isMobile ? 'column' : 'row'}>
+                <Checkbox value="5%">5%</Checkbox>
+                <Checkbox value="10%">10%</Checkbox>
+                <Checkbox value= "exentas">Exentas</Checkbox>
+              </Stack>
+            </CheckboxGroup>
           </Box>
           <Box position={'relative'}>
             <FormLabel>Vendedor</FormLabel>
@@ -381,21 +435,23 @@ export default function PuntoDeVenta() {
             <Thead>
               <Tr>
                 <Th>Código</Th>
-                <Th>Descripción</Th>
+                <Th>Nombre</Th>
                 <Th isNumeric>Precio</Th>
                 <Th isNumeric>Cantidad</Th>
+                <Th isNumeric>Impuesto</Th>
                 <Th isNumeric>Subtotal</Th>
               </Tr>
             </Thead>
             <Tbody>
               {items.map((item, index) => (
                 <Tr key={index}>
-                  <Td>{item.id}</Td>
-                  <Td>{item.nombre}</Td>
-                  <Td isNumeric>{(item.precio * tasasDeCambio[moneda]).toFixed(0)}</Td>
-                  <Td isNumeric>{item.cantidad}</Td>
-                  <Td isNumeric>{(item.precio* tasasDeCambio[moneda] * item.cantidad).toFixed(2)}</Td>
-                </Tr>
+                <Td>{item.id}</Td>
+                <Td>{item.nombre}</Td>
+                <Td isNumeric>{formatCurrency(item.precioUnitario)}</Td>
+                <Td isNumeric>{item.cantidad}</Td>
+                <Td isNumeric>{formatCurrency(item.impuesto)}</Td>
+                <Td isNumeric>{formatCurrency(item.subtotal)}</Td>
+              </Tr>
               ))}
             </Tbody>
           </Table>
@@ -487,9 +543,9 @@ export default function PuntoDeVenta() {
                   />
         </Flex>
         <Box textAlign={isMobile ? "left" : "right"}>
-          <Text fontSize="lg" fontWeight="bold">Subtotal: ${items.reduce((acc, item) => acc + item.precio * item.cantidad * tasasDeCambio[moneda], 0).toFixed(0)}</Text>
-          <Text fontSize="lg" fontWeight="bold">Descuento: {descuentoTipo === 'porcentaje' ? `${descuentoValor}%` : `$${descuentoValor}`}</Text>
-          <Text fontSize="lg" fontWeight="bold">Total: ${Number(calcularTotal()).toFixed(0)}</Text>
+          <Text fontSize="lg" fontWeight="bold">Subtotal: {formatCurrency(items.reduce((acc, item) => acc + item.subtotal, 0))}</Text>
+          <Text fontSize="lg" fontWeight="bold">Descuento: {descuentoTipo === 'porcentaje' ? `${descuentoValor}%` : formatCurrency(descuentoValor*tasasDeCambio[moneda])}</Text>
+          <Text fontSize="lg" fontWeight="bold">Total Neto: {formatCurrency(calcularTotal())}</Text>
           <Button colorScheme="blue" mt={4} width={isMobile ? "full" : "auto"}>Finalizar Venta</Button>
         </Box>
       </Flex>
