@@ -18,9 +18,6 @@ import {
   useToast, 
   Text, 
   useMediaQuery,
-  CheckboxGroup,
-  Checkbox,
-  Stack
 } from '@chakra-ui/react'
 
 const sucursales = ['Central', 'Norte', 'Sur']
@@ -52,38 +49,37 @@ const clientes = [
 ]
 
 const articulos = [
-  { id: 1, nombre: 'Laptop HP', precio: 899.99, codigo: 'HP-001' },
-  { id: 2, nombre: 'Monitor Dell 27"', precio: 299.99, codigo: 'DELL-001' },
-  { id: 3, nombre: 'Teclado Mecánico', precio: 129.99, codigo: 'RAZER-001' },
-  { id: 4, nombre: 'Mouse Logitech', precio: 49.99,  codigo: 'LOGITECH-001' },
-  { id: 5, nombre: 'Impresora Epson', precio: 199.99, codigo: 'EPSON-001' },
-  { id: 6, nombre: 'Silla Gamer', precio: 199.99, codigo: 'GAMER-001' },
-  { id: 7, nombre: 'Escritorio', precio: 299.99, codigo: 'DESK-001' },
-  { id: 8, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-001' },
-  { id: 9, nombre: 'Lámpara de Escritorio', precio: 29.99, codigo: 'LAMP-001' },
-  { id: 10, nombre: 'Estantería', precio: 79.99, codigo: 'SHELF-001' },
-  { id: 11, nombre: 'Cajonera', precio: 49.99, codigo: 'DRAWER-001' },
-  { id: 12, nombre: 'Mesa de Centro', precio: 99.99, codigo: 'COFFEE-001' },
-  { id: 13, nombre: 'Sofá', precio: 499.99, codigo: 'SOFA-001' },
-  { id: 14, nombre: 'Mesa de Comedor', precio: 199.99, codigo: 'DINING-001' },
-  { id: 15, nombre: 'Silla de Comedor', precio: 49.99, codigo: 'DINING-CHAIR-001' },
-  { id: 16, nombre: 'Cama', precio: 299.99, codigo: 'BED-001' },
-  { id: 17, nombre: 'Colchón', precio: 199.99, codigo: 'MATTRESS-001' },
-  { id: 18, nombre: 'Mesa de Noche', precio: 49.99, codigo: 'NIGHTSTAND-001' },
-  { id: 19, nombre: 'Armario', precio: 199.99, codigo: 'WARDROBE-001' },
-  { id: 20, nombre: 'Espejo', precio: 29.99, codigo: 'MIRROR-001' },
-  { id: 21, nombre: 'Cómoda', precio: 99.99, codigo: 'DRESSER-001' },
-  { id: 22, nombre: 'Mesa de TV', precio: 79.99, codigo: 'TV-STAND-001' },
-  { id: 23, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-CHAIR-001' },
-  { id: 24, nombre: 'Lámpara de Pie', precio: 49.99, codigo: 'FLOOR-LAMP-001' },
-  { id: 25, nombre: 'Sofá Cama', precio: 399.99, codigo: 'SOFA-BED-001' },
-  { id: 26, nombre: 'Mesa de Centro Elevable', precio: 149.99, codigo: 'COFFEE-TABLE-001' },
-  { id: 27, nombre: 'Mesa de Comedor Extensible', precio: 299.99, codigo: 'EXTENDABLE-DINING-TABLE-001' },
+  { id: 1, nombre: 'Laptop HP', precio: 899.99, codigo: 'HP-001', impuesto: '5%' },
+  { id: 2, nombre: 'Monitor Dell 27"', precio: 299.99, codigo: 'DELL-001' , impuesto: '10%'},
+  { id: 3, nombre: 'Teclado Mecánico', precio: 129.99, codigo: 'RAZER-001', impuesto: '5%' },
+  { id: 4, nombre: 'Mouse Logitech', precio: 49.99,  codigo: 'LOGITECH-001', impuesto: '10%' },
+  { id: 5, nombre: 'Impresora Epson', precio: 199.99, codigo: 'EPSON-001', impuesto: '5%' },
+  { id: 6, nombre: 'Silla Gamer', precio: 199.99, codigo: 'GAMER-001', impuesto: '10%' },
+  { id: 7, nombre: 'Escritorio', precio: 299.99, codigo: 'DESK-001' , impuesto: '5%'},
+  { id: 8, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-001', impuesto: '10%' },
+  { id: 9, nombre: 'Lámpara de Escritorio', precio: 29.99, codigo: 'LAMP-001', impuesto: '5%' },
+  { id: 10, nombre: 'Estantería', precio: 79.99, codigo: 'SHELF-001' , impuesto: '10%'},
+  { id: 11, nombre: 'Cajonera', precio: 49.99, codigo: 'DRAWER-001', impuesto: '5%' },
+  { id: 12, nombre: 'Mesa de Centro', precio: 99.99, codigo: 'COFFEE-001', impuesto: '10%' },
+  { id: 13, nombre: 'Sofá', precio: 499.99, codigo: 'SOFA-001' , impuesto: '5%'},
+  { id: 14, nombre: 'Mesa de Comedor', precio: 199.99, codigo: 'DINING-001', impuesto: '10%' },
+  { id: 15, nombre: 'Silla de Comedor', precio: 49.99, codigo: 'DINING-CHAIR-001', impuesto: '5%' },
+  { id: 16, nombre: 'Cama', precio: 299.99, codigo: 'BED-001', impuesto: '10%' },
+  { id: 17, nombre: 'Colchón', precio: 199.99, codigo: 'MATTRESS-001', impuesto: '5%' },
+  { id: 18, nombre: 'Mesa de Noche', precio: 49.99, codigo: 'NIGHTSTAND-001', impuesto: '10%' },
+  { id: 19, nombre: 'Armario', precio: 199.99, codigo: 'WARDROBE-001', impuesto: '5%' },
+  { id: 20, nombre: 'Espejo', precio: 29.99, codigo: 'MIRROR-001', impuesto: '10%' },
+  { id: 21, nombre: 'Cómoda', precio: 99.99, codigo: 'DRESSER-001', impuesto: '5%' },
+  { id: 22, nombre: 'Mesa de TV', precio: 79.99, codigo: 'TV-STAND-001', impuesto: '10%' },
+  { id: 23, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-CHAIR-001', impuesto: '5%' },
+  { id: 24, nombre: 'Lámpara de Pie', precio: 49.99, codigo: 'FLOOR-LAMP-001', impuesto: '10%' },
+  { id: 25, nombre: 'Sofá Cama', precio: 399.99, codigo: 'SOFA-BED-001', impuesto: '5%' },
+  { id: 26, nombre: 'Mesa de Centro Elevable', precio: 149.99, codigo: 'COFFEE-TABLE-001', impuesto: '10%' },
+  { id: 27, nombre: 'Mesa de Comedor Extensible', precio: 299.99, codigo: 'EXTENDABLE-DINING-TABLE-001' , impuesto: '5%'},
 ]
 
 const tasasDeCambio: { [key: string]: number } = {
   USD: 1,
-  BRL: 5.24,
   PYG: 7300,
 }
 
@@ -97,7 +93,7 @@ export default function PuntoDeVenta() {
   const [articuloBusqueda, setArticuloBusqueda] = useState('')
   const [clienteBusqueda, setClienteBusqueda] = useState('')
   const [cantidad, setCantidad] = useState(1)
-  const [items, setItems] = useState<{ id: number, nombre: string, precioUnitario: number, cantidad: number, subtotal: number, impuesto: number, precioOriginal: number}[]>([])
+  const [items, setItems] = useState<{ id: number, nombre: string, precioUnitario: number, cantidad: number, subtotal: number, impuesto:string, impuesto5:number, impuesto10:number,exentas:number, precioOriginal: number}[]>([])
   const [selectedItem, setSelectedItem] = useState<typeof articulos[0] | null>(null)
   const [condicionVenta, setCondicionVenta] = useState('Contado')
   const [notaFiscal, setNotaFiscal] = useState('Factura')
@@ -108,14 +104,12 @@ export default function PuntoDeVenta() {
   const [descuentoValor, setDescuentoValor] = useState(0)
   const [buscarVendedor, setBuscarVendedor] = useState('')
   const [recomedacionesVendedores, setRecomendacionesVendedores] = useState<typeof vendedores>([])
-  const [impuestos, setImpuestos]= useState<string[]>(['10%'])
 
   const toast = useToast()
 
   const formatCurrency = (amount: number) => {
     const currencySymbol : {[key: string] :string} = {
       USD: '$',
-      BRL: 'R$',
       PYG: '₲',
     };
 
@@ -126,25 +120,32 @@ export default function PuntoDeVenta() {
     }).format(amount).replace(/\s/g, '').replace(moneda, currencySymbol[moneda]);
     }
 
-  const calcularImpuesto = (precio: number)=>{
-    let impuesto = 0;
-    if (impuestos.includes('5%')) impuesto += precio * 0.05;
-    if (impuestos.includes('10%')) impuesto += precio * 0.1;
-    return impuesto;
+  const calcularImpuesto = (precio:  number, impuesto: string)=>{
+    switch(impuesto){
+      case '5%':
+        return{impuesto5: precio * 0.05, impuesto10:0, exentas:0};
+      case '10%':
+        return{impuesto5: 0, impuesto10: precio * 0.1, exentas:0};
+      case 'exentas':
+        return{impuesto5: 0, impuesto10: 0, exentas:precio};
+      default:
+        return{impuesto5: 0, impuesto10: 0, exentas:0};
   }
+}
 
   const agregarItem = () => {
     if (selectedItem) {
       const precioEnMonedaActual = selectedItem.precio * tasasDeCambio[moneda]
-      const impuesto = calcularImpuesto(precioEnMonedaActual)
+      const impuestos = calcularImpuesto(precioEnMonedaActual, selectedItem.impuesto)
       const nuevoItem = {
         id: selectedItem.id,
         nombre: selectedItem.nombre,
         precioOriginal: selectedItem.precio,
         precioUnitario: precioEnMonedaActual,
         cantidad,
-        impuesto: impuesto * cantidad,
-        subtotal: (precioEnMonedaActual + impuesto) * cantidad,
+        impuesto: selectedItem.impuesto,
+        ...impuestos ,
+        subtotal: precioEnMonedaActual * cantidad,
       }
       setItems([...items, nuevoItem])
       setArticuloBusqueda('')
@@ -233,12 +234,14 @@ export default function PuntoDeVenta() {
   useEffect(() => {
     setItems(prevItems => prevItems.map(item => {
       const precioEnMonedaActual = item.precioOriginal * tasasDeCambio[moneda]
-      const impuesto = calcularImpuesto(precioEnMonedaActual)
+      const impuestos = calcularImpuesto(precioEnMonedaActual, item.impuesto)
       return {
         ...item,
         precioUnitario: precioEnMonedaActual,
-        impuesto: impuesto * item.cantidad,
-        subtotal: (precioEnMonedaActual + impuesto) * item.cantidad,
+        impuesto: item.impuesto,
+        impuesto5: impuestos.impuesto5 * item.cantidad,
+        impuesto10: impuestos.impuesto10 * item.cantidad,
+        subtotal: precioEnMonedaActual * item.cantidad,
       };
     })
     );
@@ -247,13 +250,6 @@ export default function PuntoDeVenta() {
         }
       }, [moneda]);
 
-  // const handleImpuestosChange = (values: string[]) => {
-  //   if (values.length === 0) {
-  //     setImpuestos(['5%'])
-  //   } else {
-  //     setImpuestos(values)
-  //   }
-  // }
 
   return (
     <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
@@ -287,19 +283,8 @@ export default function PuntoDeVenta() {
             <FormLabel>Moneda</FormLabel>
             <Select placeholder="Seleccionar moneda" value={moneda} onChange={(e) => setMoneda(e.target.value)}>
               <option value="USD">USD</option>
-              <option value="BRL">BRL</option>
               <option value="PYG">PYG</option>
             </Select>
-          </Box>
-          <Box>
-            <FormLabel>Impuestos</FormLabel>
-            <CheckboxGroup colorScheme='green' defaultValue={impuestos} onChange={(values: string[]) => setImpuestos(values)}>
-              <Stack spacing={[1, 5]} direction={isMobile ? 'column' : 'row'}>
-                <Checkbox value="5%">5%</Checkbox>
-                <Checkbox value="10%">10%</Checkbox>
-                <Checkbox value= "exentas">Exentas</Checkbox>
-              </Stack>
-            </CheckboxGroup>
           </Box>
           <Box position={'relative'}>
             <FormLabel>Vendedor</FormLabel>
@@ -449,22 +434,26 @@ export default function PuntoDeVenta() {
                 <Th>Nombre</Th>
                 <Th isNumeric>Precio</Th>
                 <Th isNumeric>Cantidad</Th>
-                <Th isNumeric>Impuesto</Th>
+                <Th isNumeric>5%</Th>
+                <Th isNumeric>10%</Th>
+                <Th isNumeric>Exentas</Th>
                 <Th isNumeric>Subtotal</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {items.map((item, index) => (
-                <Tr key={index}>
+            {items.map((item, index) => (
+              <Tr key={index}>
                 <Td>{item.id}</Td>
                 <Td>{item.nombre}</Td>
                 <Td isNumeric>{formatCurrency(item.precioUnitario)}</Td>
                 <Td isNumeric>{item.cantidad}</Td>
-                <Td isNumeric>{formatCurrency(item.impuesto)}</Td>
+                <Td isNumeric>{formatCurrency(item.impuesto5 * item.cantidad)}</Td>
+                <Td isNumeric>{formatCurrency(item.impuesto10 * item.cantidad)}</Td>
+                <Td isNumeric>{formatCurrency(item.exentas * item.cantidad)}</Td>
                 <Td isNumeric>{formatCurrency(item.subtotal)}</Td>
               </Tr>
-              ))}
-            </Tbody>
+            ))}
+          </Tbody>
           </Table>
         </Box>
       </Box>
@@ -555,6 +544,9 @@ export default function PuntoDeVenta() {
         </Flex>
         <Box textAlign={isMobile ? "left" : "right"}>
           <Text fontSize="lg" fontWeight="bold">Subtotal: {formatCurrency(items.reduce((acc, item) => acc + item.subtotal, 0))}</Text>
+          <Text fontSize="lg" fontWeight="bold">IVA 5%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto5 * item.cantidad, 0))}</Text>
+          <Text fontSize="lg" fontWeight="bold">IVA 10%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto10 * item.cantidad, 0))}</Text>
+          <Text fontSize="lg" fontWeight="bold">Exentas: {formatCurrency(items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0))}</Text>
           <Text fontSize="lg" fontWeight="bold">Descuento: {descuentoTipo === 'porcentaje' ? `${descuentoValor}%` : formatCurrency(descuentoValor*tasasDeCambio[moneda])}</Text>
           <Text fontSize="lg" fontWeight="bold">Total Neto: {formatCurrency(calcularTotal())}</Text>
           <Button colorScheme="blue" mt={4} width={isMobile ? "full" : "auto"}>Finalizar Venta</Button>
