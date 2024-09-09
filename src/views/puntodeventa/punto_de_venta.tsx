@@ -59,18 +59,18 @@ interface Articulo {
   stock: number
 }
 
-interface ItemVenta {
-  id: number
-  nombre: string
-  precioUnitario: number
-  cantidad: number
-  subtotal: number
-  impuesto: string
-  impuesto5: number
-  impuesto10: number
-  exentas: number
-  precioOriginal: number
-}
+// interface ItemVenta {
+//   id: number
+//   nombre: string
+//   precioUnitario: number
+//   cantidad: number
+//   subtotal: number
+//   impuesto: string
+//   impuesto5: number
+//   impuesto10: number
+//   exentas: number
+//   precioOriginal: number
+// }
 
 const tasasDeCambio: { [key: string]: number } = {
   USD: 1,
@@ -229,6 +229,55 @@ export default function PuntoDeVenta() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
+  }, [])
+
+
+  useEffect(() => {
+    const fetchSucursales = async () => {
+      const { data: sucursales, error } = await supabase
+        .from('sucursales')
+        .select('*')
+      if (error) throw error
+      setSucursales(sucursales)
+    }
+
+    const fetchDepositos = async () => {
+      const { data: depositos, error } = await supabase
+        .from('depositos')
+        .select('*')
+      if (error) throw error
+      setDepositos(depositos)
+    }
+
+    const fetchVendedores = async () => {
+      const { data: vendedores, error } = await supabase
+        .from('vendedores')
+        .select('*')
+      if (error) throw error
+      setVendedores(vendedores)
+    }
+
+    const fetchClientes = async () => {
+      const { data: clientes, error } = await supabase
+        .from('clientes')
+        .select('*')
+      if (error) throw error
+      setClientes(clientes)
+    }
+
+    const fetchArticulos = async () => {
+      const { data: articulos, error } = await supabase
+        .from('articulos')
+        .select('*')
+      if (error) throw error
+      setArticulos(articulos)
+    }
+
+    fetchSucursales()
+    fetchDepositos()
+    fetchVendedores()
+    fetchClientes()
+    fetchArticulos()
   }, [])
 
   useEffect(() => {
@@ -485,10 +534,12 @@ export default function PuntoDeVenta() {
                       setRecomendaciones([])
                     }}
                   >
+                    <Flex >
                     {articulo.nombre}
-                    <Text as="span" color="gray.500" fontSize={'12px'}>-{articulo.codigo}</Text>
-                    <Text as="span" color="gray.500" fontSize={'12px'}>-{articulo.precio}</Text>
-                    <Text as="span" color="gray.500" fontSize={'12px'}>-{articulo.stock}</Text>
+                      <Text as="span" color="gray.500" fontSize={'12px'}>//Codigo: {articulo.codigo}</Text>
+                      <Text as="span" color="gray.500" fontSize={'12px'}>//Precio: {articulo.precio}</Text>
+                      <Text as="span" color="gray.500" fontSize={'12px'}>//Stock: {articulo.stock}</Text>
+                    </Flex>
                   </Box>
                 ))}
               </Box>
