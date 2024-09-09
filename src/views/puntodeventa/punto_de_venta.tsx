@@ -18,65 +18,59 @@ import {
   useToast, 
   Text, 
   useMediaQuery,
+  Divider
 } from '@chakra-ui/react'
+import {createClient} from '@supabase/supabase-js'
 
-const sucursales = ['Central', 'Norte', 'Sur']
-const depositos = ['Principal', 'Secundario', 'Auxiliar']
-const vendedores = [
-  { id: 1, nombre: 'Juan Pérez', codigo:'001' },
-  { id: 2, nombre: 'María González', codigo:'002' },
-  { id: 3, nombre: 'Carlos Rodríguez', codigo:'003' },
-  { id: 4, nombre: 'Ana Martínez', codigo:'004' },
-  { id: 5, nombre: 'Pedro Gómez', codigo:'005' },
-  { id: 6, nombre: 'Laura Benítez', codigo:'006' },
-]
+const supabaseUrl = 'https://mwjeyvhpyulgczpqxgtb.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13amV5dmhweXVsZ2N6cHF4Z3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU4OTU5NDksImV4cCI6MjA0MTQ3MTk0OX0.HKoJXsJKh-0L3uzwz-uATxvV1MzUR3NUfX_NJvlVmQU'
 
-const clientes = [
-  { id: 1, nombre: 'Juan Pérez', ruc: '5566958-1', lineaCredito: 1000 },
-  { id: 2, nombre: 'María González', ruc: '5566958-2', lineaCredito: 2000 },
-  { id: 3, nombre: 'Carlos Rodríguez', ruc: '5566958-3', lineaCredito: 0 },
-  { id: 4, nombre: 'Ana Martínez', ruc: '5566958-4', lineaCredito: 500 },
-  { id: 5, nombre: 'Pedro Gómez', ruc: '5566958-5', lineaCredito: 1500 },
-  { id: 6, nombre: 'Laura Benítez', ruc: '5566958-6', lineaCredito: 0 },
-  { id: 7, nombre: 'José López', ruc: '5566958-7', lineaCredito: 3000 },
-  { id: 8, nombre: 'Sofía Pérez', ruc: '5566958-8', lineaCredito: 2500 },
-  { id: 9, nombre: 'Diego González', ruc: '5566958-9', lineaCredito: 1000 },
-  { id: 10, nombre: 'Gabriela Rodríguez', ruc: '5566958-10', lineaCredito: 0 },
-  { id: 11, nombre: 'Jorge Martínez', ruc: '5566958-11', lineaCredito: 500 },
-  { id: 12, nombre: 'Marcela Gómez', ruc: '5566958-12', lineaCredito: 1000 },
-  { id: 13, nombre: 'Miguel Benítez', ruc: '5566958-13', lineaCredito: 2000 },
-  { id: 14, nombre: 'Carmen López', ruc: '5566958-14', lineaCredito: 1500 },
-]
+const supabase = createClient(supabaseUrl, supabaseKey)
 
-const articulos = [
-  { id: 1, nombre: 'Laptop HP', precio: 899.99, codigo: 'HP-001', impuesto: '5%' },
-  { id: 2, nombre: 'Monitor Dell 27"', precio: 299.99, codigo: 'DELL-001' , impuesto: '10%'},
-  { id: 3, nombre: 'Teclado Mecánico', precio: 129.99, codigo: 'RAZER-001', impuesto: '5%' },
-  { id: 4, nombre: 'Mouse Logitech', precio: 49.99,  codigo: 'LOGITECH-001', impuesto: '10%' },
-  { id: 5, nombre: 'Impresora Epson', precio: 199.99, codigo: 'EPSON-001', impuesto: '5%' },
-  { id: 6, nombre: 'Silla Gamer', precio: 199.99, codigo: 'GAMER-001', impuesto: '10%' },
-  { id: 7, nombre: 'Escritorio', precio: 299.99, codigo: 'DESK-001' , impuesto: '5%'},
-  { id: 8, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-001', impuesto: '10%' },
-  { id: 9, nombre: 'Lámpara de Escritorio', precio: 29.99, codigo: 'LAMP-001', impuesto: '5%' },
-  { id: 10, nombre: 'Estantería', precio: 79.99, codigo: 'SHELF-001' , impuesto: '10%'},
-  { id: 11, nombre: 'Cajonera', precio: 49.99, codigo: 'DRAWER-001', impuesto: '5%' },
-  { id: 12, nombre: 'Mesa de Centro', precio: 99.99, codigo: 'COFFEE-001', impuesto: '10%' },
-  { id: 13, nombre: 'Sofá', precio: 499.99, codigo: 'SOFA-001' , impuesto: '5%'},
-  { id: 14, nombre: 'Mesa de Comedor', precio: 199.99, codigo: 'DINING-001', impuesto: '10%' },
-  { id: 15, nombre: 'Silla de Comedor', precio: 49.99, codigo: 'DINING-CHAIR-001', impuesto: '5%' },
-  { id: 16, nombre: 'Cama', precio: 299.99, codigo: 'BED-001', impuesto: '10%' },
-  { id: 17, nombre: 'Colchón', precio: 199.99, codigo: 'MATTRESS-001', impuesto: '5%' },
-  { id: 18, nombre: 'Mesa de Noche', precio: 49.99, codigo: 'NIGHTSTAND-001', impuesto: '10%' },
-  { id: 19, nombre: 'Armario', precio: 199.99, codigo: 'WARDROBE-001', impuesto: '5%' },
-  { id: 20, nombre: 'Espejo', precio: 29.99, codigo: 'MIRROR-001', impuesto: '10%' },
-  { id: 21, nombre: 'Cómoda', precio: 99.99, codigo: 'DRESSER-001', impuesto: '5%' },
-  { id: 22, nombre: 'Mesa de TV', precio: 79.99, codigo: 'TV-STAND-001', impuesto: '10%' },
-  { id: 23, nombre: 'Silla de Oficina', precio: 99.99, codigo: 'OFFICE-CHAIR-001', impuesto: '5%' },
-  { id: 24, nombre: 'Lámpara de Pie', precio: 49.99, codigo: 'FLOOR-LAMP-001', impuesto: '10%' },
-  { id: 25, nombre: 'Sofá Cama', precio: 399.99, codigo: 'SOFA-BED-001', impuesto: '5%' },
-  { id: 26, nombre: 'Mesa de Centro Elevable', precio: 149.99, codigo: 'COFFEE-TABLE-001', impuesto: '10%' },
-  { id: 27, nombre: 'Mesa de Comedor Extensible', precio: 299.99, codigo: 'EXTENDABLE-DINING-TABLE-001' , impuesto: '5%'},
-]
+interface Sucursal {
+  id: number
+  nombre: string
+}
+
+interface Deposito {
+  id: number
+  nombre: string
+}
+
+interface Vendedor {
+  id: number
+  nombre: string
+  codigo: string
+}
+
+interface Cliente {
+  id: number
+  nombre: string
+  ruc: string
+  lineaCredito: number
+}
+
+interface Articulo {
+  id: number
+  nombre: string
+  precio: number
+  codigo: string
+  impuesto: string
+  stock: number
+}
+
+interface ItemVenta {
+  id: number
+  nombre: string
+  precioUnitario: number
+  cantidad: number
+  subtotal: number
+  impuesto: string
+  impuesto5: number
+  impuesto10: number
+  exentas: number
+  precioOriginal: number
+}
 
 const tasasDeCambio: { [key: string]: number } = {
   USD: 1,
@@ -84,11 +78,17 @@ const tasasDeCambio: { [key: string]: number } = {
 }
 
 export default function PuntoDeVenta() {
+  const [sucursales, setSucursales] = useState<Sucursal[]>([])
+  const [depositos, setDepositos] = useState<Deposito[]>([])
+  const [vendedores, setVendedores] = useState<Vendedor[]>([])
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [articulos, setArticulos] = useState<Articulo[]>([])
+
   const [sucursal, setSucursal] = useState('Central')
   const [deposito, setDeposito] = useState('Principal')
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [moneda, setMoneda] = useState('PYG')
-  const [, setVendedor] = useState('')
+  const [vendedor, setVendedor] = useState('')
   const [clienteSeleccionado, setClienteSeleccionado] = useState<typeof clientes[0] | null>(null)
   const [articuloBusqueda, setArticuloBusqueda] = useState('')
   const [clienteBusqueda, setClienteBusqueda] = useState('')
@@ -250,7 +250,84 @@ export default function PuntoDeVenta() {
         }
       }, [moneda]);
 
-
+      const finalizarVenta = async () => {
+        try {
+          const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0)
+          const descuento = descuentoTipo === 'porcentaje'
+            ? subtotal * (descuentoValor / 100)
+            : descuentoValor
+          const total = subtotal - descuento
+    
+          const { data: ventaData, error: ventaError } = await supabase
+            .from('ventas')
+            .insert({
+              sucursal_id: parseInt(sucursal),
+              deposito_id: parseInt(deposito),
+              vendedor_id: parseInt(vendedor),
+              cliente_id: clienteSeleccionado?.id,
+              total,
+              descuento,
+              condicion_venta: condicionVenta,
+              nota_fiscal: notaFiscal
+            })
+            .select()
+    
+          if (ventaError) throw ventaError
+    
+          const ventaId = ventaData[0].id
+    
+          const itemsVenta = items.map(item => ({
+            venta_id: ventaId,
+            articulo_id: item.id,
+            cantidad: item.cantidad,
+            precio_unitario: item.precioUnitario,
+            subtotal: item.subtotal,
+            impuesto5: item.impuesto5,
+            impuesto10: item.impuesto10,
+            exentas: item.exentas
+          }))
+    
+          const { error: itemsError } = await supabase
+            .from('items_venta')
+            .insert(itemsVenta)
+    
+          if (itemsError) throw itemsError
+    
+          for (const item of items) {
+            const { error: stockError } = await supabase
+              .from('articulos')
+              .update({ stock: supabase.rpc('subtract_stock', { item_id: item.id, quantity: item.cantidad }) })
+              .eq('id', item.id);
+          
+            if (stockError) throw stockError;
+          }
+          
+    
+          setItems([])
+          setSucursal('')
+          setDeposito('')
+          setVendedor('')
+          setClienteSeleccionado(null)
+          setDescuentoValor(0)
+    
+          toast({
+            title: "Venta finalizada",
+            description: "La venta se ha guardado correctamente",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+          })
+        } catch (error) {
+          console.error('Error al finalizar la venta:', error)
+          toast({
+            title: "Error",
+            description: "Ha ocurrido un error al finalizar la venta",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+          })
+        }
+      }
   return (
     <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
       <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile ? 4 : 6} alignItems="center" rounded="lg">
@@ -263,7 +340,7 @@ export default function PuntoDeVenta() {
             <FormLabel>Sucursal</FormLabel>
             <Select placeholder="Seleccionar sucursal" value={sucursal} onChange={(e) => setSucursal(e.target.value)}>
               {sucursales.map((sucursal) => (
-                <option key={sucursal} value={sucursal}>{sucursal}</option>
+                <option key={sucursal.id} value={sucursal.id.toString()}>{sucursal.nombre}</option>
               ))}
             </Select>
           </Box>
@@ -271,7 +348,7 @@ export default function PuntoDeVenta() {
             <FormLabel>Depósito</FormLabel>
             <Select placeholder="Seleccionar depósito" value={deposito} onChange={(e) => setDeposito(e.target.value)}>
               {depositos.map((deposito) => (
-                <option key={deposito} value={deposito}>{deposito}</option>
+                <option key={deposito.id} value={deposito.id.toString()}>{deposito.nombre}</option>
               ))}
             </Select>
           </Box>
@@ -408,7 +485,10 @@ export default function PuntoDeVenta() {
                       setRecomendaciones([])
                     }}
                   >
-                    {articulo.nombre} <Text as="span" color="gray.500" fontSize={'12px'}>-{articulo.codigo}</Text>
+                    {articulo.nombre}
+                    <Text as="span" color="gray.500" fontSize={'12px'}>-{articulo.codigo}</Text>
+                    <Text as="span" color="gray.500" fontSize={'12px'}>-{articulo.precio}</Text>
+                    <Text as="span" color="gray.500" fontSize={'12px'}>-{articulo.stock}</Text>
                   </Box>
                 ))}
               </Box>
@@ -518,7 +598,7 @@ export default function PuntoDeVenta() {
                 onClick={() => setNotaFiscal('Boleta')}
                 width={isMobile ? "full" : "auto"}
               >
-                Boleta
+                Nota Interna
               </Button>
             </Flex>
           </Box>
@@ -542,14 +622,18 @@ export default function PuntoDeVenta() {
                     ml={2}
                   />
         </Flex>
+        <Box>
+            <Text fontSize="md" fontWeight="bold">IVA 5%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto5 * item.cantidad, 0))}</Text>
+            <Divider borderWidth={'3px'} borderColor={'blue.500'}/>
+            <Text fontSize="md" fontWeight="bold">IVA 10%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto10 * item.cantidad, 0))}</Text>
+            <Divider borderWidth={'3px'} borderColor={'blue.500'}/>
+            <Text fontSize="md" fontWeight="bold">Exentas: {formatCurrency(items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0))}</Text>
+        </Box>
         <Box textAlign={isMobile ? "left" : "right"}>
           <Text fontSize="lg" fontWeight="bold">Subtotal: {formatCurrency(items.reduce((acc, item) => acc + item.subtotal, 0))}</Text>
-          <Text fontSize="lg" fontWeight="bold">IVA 5%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto5 * item.cantidad, 0))}</Text>
-          <Text fontSize="lg" fontWeight="bold">IVA 10%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto10 * item.cantidad, 0))}</Text>
-          <Text fontSize="lg" fontWeight="bold">Exentas: {formatCurrency(items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0))}</Text>
           <Text fontSize="lg" fontWeight="bold">Descuento: {descuentoTipo === 'porcentaje' ? `${descuentoValor}%` : formatCurrency(descuentoValor*tasasDeCambio[moneda])}</Text>
           <Text fontSize="lg" fontWeight="bold">Total Neto: {formatCurrency(calcularTotal())}</Text>
-          <Button colorScheme="blue" mt={4} width={isMobile ? "full" : "auto"}>Finalizar Venta</Button>
+          <Button colorScheme="blue" mt={4} width={isMobile ? "full" : "auto"} onClick={finalizarVenta}>Finalizar Venta</Button>
         </Box>
       </Flex>
     </Box>
