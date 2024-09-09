@@ -133,6 +133,14 @@ export default function PuntoDeVenta() {
   }
 }
 
+const calcularTotalImpuestos = ()=> {
+  const totalImpuesto5 = items.reduce((acc, item) => acc + item.impuesto5 * item.cantidad, 0);
+  const totalImpuesto10 = items.reduce((acc, item) => acc + item.impuesto10 * item.cantidad, 0);
+  const totalExentas = items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0);
+  const totalImpuestos = totalExentas + totalImpuesto5 + totalImpuesto10;
+  return totalImpuestos;
+}
+
   const agregarItem = () => {
     if (selectedItem) {
       const precioEnMonedaActual = selectedItem.precio * tasasDeCambio[moneda]
@@ -145,7 +153,7 @@ export default function PuntoDeVenta() {
         cantidad,
         impuesto: selectedItem.impuesto,
         ...impuestos ,
-        subtotal: precioEnMonedaActual * cantidad,
+        subtotal: (precioEnMonedaActual +(impuestos.impuesto5) + (impuestos.impuesto10) + (impuestos.exentas))* cantidad,
       }
       setItems([...items, nuevoItem])
       setArticuloBusqueda('')
@@ -290,7 +298,7 @@ export default function PuntoDeVenta() {
         impuesto: item.impuesto,
         impuesto5: impuestos.impuesto5 * item.cantidad,
         impuesto10: impuestos.impuesto10 * item.cantidad,
-        subtotal: precioEnMonedaActual * item.cantidad,
+        subtotal: precioEnMonedaActual * item.cantidad + (impuestos.impuesto5 * item.cantidad) + (impuestos.impuesto10 * item.cantidad) + (impuestos.exentas * item.cantidad),
       };
     })
     );
@@ -563,11 +571,11 @@ export default function PuntoDeVenta() {
               <Tr>
                 <Th>Código</Th>
                 <Th>Nombre</Th>
-                <Th isNumeric>Precio</Th>
-                <Th isNumeric>Cantidad</Th>
+                <Th isNumeric>Precio Unitario</Th>
                 <Th isNumeric>5%</Th>
                 <Th isNumeric>10%</Th>
                 <Th isNumeric>Exentas</Th>
+                <Th isNumeric>Cantidad</Th>
                 <Th isNumeric>Subtotal</Th>
               </Tr>
             </Thead>
@@ -577,10 +585,10 @@ export default function PuntoDeVenta() {
                 <Td>{item.id}</Td>
                 <Td>{item.nombre}</Td>
                 <Td isNumeric>{formatCurrency(item.precioUnitario)}</Td>
+                <Td isNumeric>{formatCurrency(item.impuesto5)}</Td>
+                <Td isNumeric>{formatCurrency(item.impuesto10)}</Td>
+                <Td isNumeric>{formatCurrency(item.exentas)}</Td>
                 <Td isNumeric>{item.cantidad}</Td>
-                <Td isNumeric>{formatCurrency(item.impuesto5 * item.cantidad)}</Td>
-                <Td isNumeric>{formatCurrency(item.impuesto10 * item.cantidad)}</Td>
-                <Td isNumeric>{formatCurrency(item.exentas * item.cantidad)}</Td>
                 <Td isNumeric>{formatCurrency(item.subtotal)}</Td>
               </Tr>
             ))}
@@ -679,6 +687,7 @@ export default function PuntoDeVenta() {
             <Text fontSize="md" fontWeight="bold">IVA 10%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto10 * item.cantidad, 0))}</Text>
             <Divider borderWidth={'3px'} borderColor={'blue.500'}/>
             <Text fontSize="md" fontWeight="bold">Exentas: {formatCurrency(items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0))}</Text>
+            <Text fontSize="md" fontWeight="bold">Total Impuestos: {formatCurrency(calcularTotalImpuestos())}</Text>
         </Box>
         <Box textAlign={isMobile ? "left" : "right"}>
           <Text fontSize="lg" fontWeight="bold">Subtotal: {formatCurrency(items.reduce((acc, item) => acc + item.subtotal, 0))}</Text>
