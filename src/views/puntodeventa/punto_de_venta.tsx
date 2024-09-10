@@ -682,11 +682,12 @@ const calcularTotalImpuestos = ()=> {
                   />
         </Flex>
         <Box>
-            <Text fontSize="md" fontWeight="bold">IVA 5%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto5 * item.cantidad, 0))}</Text>
-            <Divider borderWidth={'3px'} borderColor={'blue.500'}/>
-            <Text fontSize="md" fontWeight="bold">IVA 10%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto10 * item.cantidad, 0))}</Text>
-            <Divider borderWidth={'3px'} borderColor={'blue.500'}/>
-            <Text fontSize="md" fontWeight="bold">Exentas: {formatCurrency(items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0))}</Text>
+            <Text fontSize="md" fontWeight="bold">Total IVA 5%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto5 * item.cantidad, 0))}</Text>
+            <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
+            <Text fontSize="md" fontWeight="bold">Total IVA 10%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto10 * item.cantidad, 0))}</Text>
+            <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
+            <Text fontSize="md" fontWeight="bold">Total Exentas: {formatCurrency(items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0))}</Text>
+            <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
             <Text fontSize="md" fontWeight="bold">Total Impuestos: {formatCurrency(calcularTotalImpuestos())}</Text>
         </Box>
         <Box textAlign={isMobile ? "left" : "right"}>
