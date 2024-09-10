@@ -383,11 +383,11 @@ const calcularTotalImpuestos = ()=> {
           }
       
           if (condicionVenta === 1 && clienteSeleccionado) {
-            const nuevoCredito = clienteSeleccionado.lineaCredito - total;
+            const nuevoCredito = (clienteSeleccionado.lineaCredito||0) - total;
             console.log('Actualizando línea de crédito:', { clienteId: clienteSeleccionado.id, nuevoCredito });
             const { error: creditoError } = await supabase
               .from('clientes')
-              .update({ lineaCredito: nuevoCredito })
+              .update({ linea_credito: nuevoCredito })
               .eq('id', clienteSeleccionado.id);
       
             if (creditoError) {
@@ -542,7 +542,7 @@ const calcularTotalImpuestos = ()=> {
                   >
                     <Text fontWeight="bold">{cliente.nombre}</Text>
                     <Text as="span" color="gray.500" fontSize="sm">RUC: {cliente.ruc}</Text>
-                    <Text as="span" color="green.500" fontSize="sm" ml={2}>Línea de crédito: {formatCurrency(Number(cliente.lineaCredito))}</Text>
+                    <Text as="span" color="green.500" fontSize="sm" ml={2}>Línea de crédito: {formatCurrency(Number(cliente.lineaCredito) || 0)}</Text>
                   </Box>
                 ))}
               </Box>
