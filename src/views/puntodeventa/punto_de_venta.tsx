@@ -95,8 +95,8 @@ export default function PuntoDeVenta() {
   const [cantidad, setCantidad] = useState(1)
   const [items, setItems] = useState<{ id: number, nombre: string, precioUnitario: number, cantidad: number, subtotal: number, impuesto:string, impuesto5:number, impuesto10:number,exentas:number, precioOriginal: number}[]>([])
   const [selectedItem, setSelectedItem] = useState<typeof articulos[0] | null>(null)
-  const [condicionVenta, setCondicionVenta] = useState('Contado')
-  const [notaFiscal, setNotaFiscal] = useState('Factura')
+  const [condicionVenta, setCondicionVenta] = useState(0)
+  const [notaFiscal, setNotaFiscal] = useState(0)
   const [isMobile] = useMediaQuery('(max-width: 48em)')
   const [recomendaciones, setRecomendaciones] = useState<typeof articulos>([])
   const [recomendacionesClientes, setRecomendacionesClientes] = useState<typeof clientes>([])
@@ -376,7 +376,7 @@ const calcularTotalImpuestos = ()=> {
             }
           }
       
-          if (condicionVenta === 'Crédito' && clienteSeleccionado) {
+          if (condicionVenta === 1 && clienteSeleccionado) {
             const nuevoCredito = clienteSeleccionado.lineaCredito - total;
             console.log('Actualizando línea de crédito:', { clienteId: clienteSeleccionado.id, nuevoCredito });
             const { error: creditoError } = await supabase
@@ -392,11 +392,11 @@ const calcularTotalImpuestos = ()=> {
       
           // Limpiar el estado y mostrar mensaje de éxito
           setItems([]);
-          setSucursal('');
-          setDeposito('');
           setVendedor('');
           setClienteSeleccionado(null);
           setDescuentoValor(0);
+          setCondicionVenta(0);
+          setNotaFiscal(0);
       
           toast({
             title: "Venta finalizada",
@@ -633,27 +633,27 @@ const calcularTotalImpuestos = ()=> {
             <Text fontWeight={'bold'} mb={2}>Condición de Venta</Text>
             <Flex flexDir={isMobile ? 'column' : 'row'} gap={2}>
               <Button 
-                variant={condicionVenta === 'Contado' ? 'solid' : 'outline'}
-                bg={condicionVenta === 'Contado' ? 'blue.500' : 'transparent'}
-                color={condicionVenta === 'Contado' ? 'white' : 'blue.500'}
+                variant={condicionVenta === 0 ? 'solid' : 'outline'}
+                bg={condicionVenta === 0 ? 'blue.500' : 'transparent'}
+                color={condicionVenta === 0 ? 'white' : 'blue.500'}
                 borderColor="blue.500"
                 _hover={{
-                  bg: condicionVenta === 'Contado' ? 'blue.600' : 'blue.50',
+                  bg: condicionVenta === 0 ? 'blue.600' : 'blue.50',
                 }}
-                onClick={() => setCondicionVenta('Contado')}
+                onClick={() => setCondicionVenta(0)}
                 width={isMobile ? "full" : "auto"}
               >
                 Contado
               </Button>
               <Button 
-                variant={condicionVenta === 'Crédito' ? 'solid' : 'outline'}
-                bg={condicionVenta === 'Crédito' ? 'blue.500' : 'transparent'}
-                color={condicionVenta === 'Crédito' ? 'white' : 'blue.500'}
+                variant={condicionVenta === 1 ? 'solid' : 'outline'}
+                bg={condicionVenta === 1 ? 'blue.500' : 'transparent'}
+                color={condicionVenta === 1 ? 'white' : 'blue.500'}
                 borderColor="blue.500"
                 _hover={{
-                  bg: condicionVenta === 'Crédito' ? 'blue.600' : 'blue.50',
+                  bg: condicionVenta === 1 ? 'blue.600' : 'blue.50',
                 }}
-                onClick={() => setCondicionVenta('Crédito')}
+                onClick={() => setCondicionVenta(1)}
                 width={isMobile ? "full" : "auto"}
                 isDisabled={!clienteSeleccionado || clienteSeleccionado.lineaCredito === 0}
               >
@@ -665,27 +665,27 @@ const calcularTotalImpuestos = ()=> {
             <Text fontWeight="bold" mb={2}>Nota Fiscal</Text>
             <Flex flexDirection={isMobile ? 'column' : 'row'} gap={2}>
               <Button 
-                variant={notaFiscal === 'Factura' ? 'solid' : 'outline'}
-                bg={notaFiscal === 'Factura' ? 'blue.500' : 'transparent'}
-                color={notaFiscal === 'Factura' ? 'white' : 'blue.500'}
+                variant={notaFiscal === 0 ? 'solid' : 'outline'}
+                bg={notaFiscal === 0 ? 'blue.500' : 'transparent'}
+                color={notaFiscal === 0 ? 'white' : 'blue.500'}
                 borderColor="blue.500"
                 _hover={{
-                  bg: notaFiscal === 'Factura' ? 'blue.600' : 'blue.50',
+                  bg: notaFiscal === 0 ? 'blue.600' : 'blue.50',
                 }}
-                onClick={() => setNotaFiscal('Factura')}
+                onClick={() => setNotaFiscal(0)}
                 width={isMobile ? "full" : "auto"}
               >
                 Factura
               </Button>
               <Button 
-                variant={notaFiscal === 'Boleta' ? 'solid' : 'outline'}
-                bg={notaFiscal === 'Boleta' ? 'blue.500' : 'transparent'}
-                color={notaFiscal === 'Boleta' ? 'white' : 'blue.500'}
+                variant={notaFiscal === 1 ? 'solid' : 'outline'}
+                bg={notaFiscal === 1 ? 'blue.500' : 'transparent'}
+                color={notaFiscal === 1 ? 'white' : 'blue.500'}
                 borderColor="blue.500"
                 _hover={{
-                  bg: notaFiscal === 'Boleta' ? 'blue.600' : 'blue.50',
+                  bg: notaFiscal === 1 ? 'blue.600' : 'blue.50',
                 }}
-                onClick={() => setNotaFiscal('Boleta')}
+                onClick={() => setNotaFiscal(1)}
                 width={isMobile ? "full" : "auto"}
               >
                 Nota Interna
