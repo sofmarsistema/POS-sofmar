@@ -107,7 +107,8 @@ export default function PuntoDeVenta() {
 
   const toast = useToast()
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | null | undefined) => {
+    if (amount === null || amount === undefined) return '0';
     const currencySymbol : {[key: string] :string} = {
       USD: '$',
       PYG: '₲',
@@ -309,82 +310,112 @@ const calcularTotalImpuestos = ()=> {
 
       const finalizarVenta = async () => {
         try {
-          const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0)
+          // Verificar que todos los campos necesarios estén presentes
+          if (!sucursal || !deposito || !vendedor || !clienteSeleccionado) {
+            throw new Error('Faltan campos requeridos');
+          }
+      
+          const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
           const descuento = descuentoTipo === 'porcentaje'
             ? subtotal * (descuentoValor / 100)
-            : descuentoValor
-          const total = subtotal - descuento
-    
+            : descuentoValor;
+          const total = subtotal - descuento;
+      
+          console.log('Datos de la venta:', { sucursal, deposito, vendedor, clienteSeleccionado, total, descuento, condicionVenta, notaFiscal });
+      
           const { data: ventaData, error: ventaError } = await supabase
             .from('ventas')
             .insert({
               sucursal_id: parseInt(sucursal),
               deposito_id: parseInt(deposito),
               vendedor_id: parseInt(vendedor),
-              cliente_id: clienteSeleccionado?.id,
+              cliente_id: clienteSeleccionado.id,
               total,
               descuento,
               condicion_venta: condicionVenta,
               nota_fiscal: notaFiscal
             })
-            .select()
-    
-          if (ventaError) throw ventaError
-    
-          const ventaId = ventaData[0].id
-    
-          const itemsVenta = items.map(item => ({
-            venta_id: ventaId,
-            articulo_id: item.id,
-            cantidad: item.cantidad,
-            precio_unitario: item.precioUnitario,
-            subtotal: item.subtotal,
-            impuesto5: item.impuesto5,
-            impuesto10: item.impuesto10,
-            exentas: item.exentas
-          }))
-    
-          const { error: itemsError } = await supabase
-            .from('items_venta')
-            .insert(itemsVenta)
-    
-          if (itemsError) throw itemsError
-    
-          for (const item of items) {
-            const { error: stockError } = await supabase
-              .from('articulos')
-              .update({ stock: supabase.rpc('subtract_stock', { item_id: item.id, quantity: item.cantidad }) })
-              .eq('id', item.id);
-          
-            if (stockError) throw stockError;
+            .select();
+      
+          if (ventaError) {
+            console.error('Error al insertar la venta:', ventaError);
+            throw ventaError;
           }
-          
-    
-          setItems([])
-          setSucursal('')
-          setDeposito('')
-          setVendedor('')
-          setClienteSeleccionado(null)
-          setDescuentoValor(0)
-    
+      
+          console.log('Venta insertada:', ventaData);
+      
+          const ventaId = ventaData[0].id;
+      
+          for (const item of items) {
+            console.log('Insertando item:', item);
+            const { error: itemError } = await supabase
+              .from('items_venta')
+              .insert({
+                venta_id: ventaId,
+                articulo_id: item.id,
+                cantidad: item.cantidad,
+                precio_unitario: item.precioUnitario,
+                subtotal: item.subtotal,
+                impuesto5: item.impuesto5,
+                impuesto10: item.impuesto10,
+                exentas: item.exentas
+              });
+      
+            if (itemError) {
+              console.error('Error al insertar item:', itemError);
+              throw itemError;
+            }
+      
+            console.log('Actualizando stock del artículo:', item.id);
+            const { error: stockError } = await supabase
+              .rpc('subtract_stock', { item_id: item.id, quantity: item.cantidad });
+      
+            if (stockError) {
+              console.error('Error al actualizar stock:', stockError);
+              throw stockError;
+            }
+          }
+      
+          if (condicionVenta === 'Crédito' && clienteSeleccionado) {
+            const nuevoCredito = clienteSeleccionado.lineaCredito - total;
+            console.log('Actualizando línea de crédito:', { clienteId: clienteSeleccionado.id, nuevoCredito });
+            const { error: creditoError } = await supabase
+              .from('clientes')
+              .update({ lineaCredito: nuevoCredito })
+              .eq('id', clienteSeleccionado.id);
+      
+            if (creditoError) {
+              console.error('Error al actualizar línea de crédito:', creditoError);
+              throw creditoError;
+            }
+          }
+      
+          // Limpiar el estado y mostrar mensaje de éxito
+          setItems([]);
+          setSucursal('');
+          setDeposito('');
+          setVendedor('');
+          setClienteSeleccionado(null);
+          setDescuentoValor(0);
+      
           toast({
             title: "Venta finalizada",
             description: "La venta se ha guardado correctamente",
             status: "success",
             duration: 3000,
             isClosable: true,
-          })
+          });
         } catch (error) {
-          console.error('Error al finalizar la venta:', error)
+          console.error('Error detallado al finalizar la venta:', error);
           toast({
             title: "Error",
-            description: "Ha ocurrido un error al finalizar la venta",
+            description: error instanceof Error ? error.message : "Ha ocurrido un error al finalizar la venta",
             status: "error",
             duration: 3000,
             isClosable: true,
-          })
+          });
         }
-      }
+      };
   return (
     <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
       <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile ? 4 : 6} alignItems="center" rounded="lg">
@@ -454,7 +485,7 @@ const calcularTotalImpuestos = ()=> {
                     cursor="pointer"
                     onClick={() => {
                       setBuscarVendedor(vendedor.codigo)
-                      setVendedor(vendedor.nombre)
+                      setVendedor(vendedor.id.toString())
                       setRecomendacionesVendedores([])
                     }}
                   >
@@ -505,7 +536,7 @@ const calcularTotalImpuestos = ()=> {
                   >
                     <Text fontWeight="bold">{cliente.nombre}</Text>
                     <Text as="span" color="gray.500" fontSize="sm">RUC: {cliente.ruc}</Text>
-                    <Text as="span" color="green.500" fontSize="sm" ml={2}>Línea de crédito: ${cliente.lineaCredito}</Text>
+                    <Text as="span" color="green.500" fontSize="sm" ml={2}>Línea de crédito: {formatCurrency(Number(cliente.lineaCredito))}</Text>
                   </Box>
                 ))}
               </Box>
