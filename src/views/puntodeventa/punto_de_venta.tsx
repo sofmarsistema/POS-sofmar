@@ -47,7 +47,7 @@ interface Cliente {
   id: number
   nombre: string
   ruc: string
-  lineaCredito: number
+  linea_credito: number
 }
 
 interface Articulo {
@@ -383,7 +383,7 @@ const calcularTotalImpuestos = ()=> {
           }
       
           if (condicionVenta === 1 && clienteSeleccionado) {
-            const nuevoCredito = (clienteSeleccionado.lineaCredito||0) - total;
+            const nuevoCredito = (clienteSeleccionado.linea_credito||0) - total;
             console.log('Actualizando línea de crédito:', { clienteId: clienteSeleccionado.id, nuevoCredito });
             const { error: creditoError } = await supabase
               .from('clientes')
@@ -422,6 +422,14 @@ const calcularTotalImpuestos = ()=> {
           });
         }
       };
+
+
+      const getCreditColor= (credit:number)=>{
+        if (credit<0) return 'red.500';
+        if (credit===0) return 'gray.500';
+        return 'green.500';
+      };
+
   return (
     <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
       <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile ? 4 : 6} alignItems="center" rounded="lg">
@@ -528,23 +536,28 @@ const calcularTotalImpuestos = ()=> {
                 maxH="200px"
                 overflowY="auto"
               >
-                {recomendacionesClientes.map((cliente) => (
-                  <Box
-                    key={cliente.id}
-                    p={2}
-                    _hover={{ bg: 'gray.100' }}
-                    cursor="pointer"
-                    onClick={() => {
-                      setClienteBusqueda(cliente.nombre)
-                      setClienteSeleccionado(cliente)
-                      setRecomendacionesClientes([])
-                    }}
-                  >
-                    <Text fontWeight="bold">{cliente.nombre}</Text>
-                    <Text as="span" color="gray.500" fontSize="sm">RUC: {cliente.ruc}</Text>
-                    <Text as="span" color="green.500" fontSize="sm" ml={2}>Línea de crédito: {formatCurrency(Number(cliente.lineaCredito) || 0)}</Text>
-                  </Box>
-                ))}
+                {recomendacionesClientes.map((cliente) => {
+            const credit = Number(cliente.linea_credito) || 0;
+            const creditColor = getCreditColor(credit);
+
+            return (
+              <Box
+                key={cliente.id}
+                p={2}
+                _hover={{ bg: 'gray.100' }}
+                cursor="pointer"
+                onClick={() => {
+                  setClienteBusqueda(cliente.nombre);
+                  setClienteSeleccionado(cliente);
+                  setRecomendacionesClientes([]);
+                }}
+              >
+                <Text fontWeight="bold">{cliente.nombre}</Text>
+                <Text as="span" color="gray.500" fontSize="sm">RUC: {cliente.ruc}</Text>
+                <Text as="span" color={creditColor} fontSize="sm" ml={2}>Línea de crédito: {formatCurrency(credit)}</Text>
+              </Box>
+            );
+          })}
               </Box>
             )}
           </Box>
@@ -661,7 +674,7 @@ const calcularTotalImpuestos = ()=> {
                 }}
                 onClick={() => setCondicionVenta(1)}
                 width={isMobile ? "full" : "auto"}
-                isDisabled={!clienteSeleccionado || clienteSeleccionado.lineaCredito === 0}
+                isDisabled={!clienteSeleccionado || clienteSeleccionado.linea_credito <= 0}
               >
                 Crédito
               </Button>
