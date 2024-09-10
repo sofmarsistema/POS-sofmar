@@ -248,6 +248,9 @@ const calcularTotalImpuestos = ()=> {
         .select('*')
       if (error) throw error
       setSucursales(sucursales)
+      if (sucursales.length > 0) {
+        setSucursal(sucursales[0].id.toString())
+      }
     }
 
     const fetchDepositos = async () => {
@@ -256,6 +259,9 @@ const calcularTotalImpuestos = ()=> {
         .select('*')
       if (error) throw error
       setDepositos(depositos)
+      if (depositos.length > 0) {
+        setDeposito(depositos[0].id.toString())
+      }
     }
 
     const fetchVendedores = async () => {
