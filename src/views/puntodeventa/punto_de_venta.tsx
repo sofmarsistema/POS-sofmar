@@ -107,40 +107,50 @@ export default function PuntoDeVenta() {
 
   const toast = useToast()
 
-  const formatCurrency = (amount: number | null | undefined) => {
-    if (amount === null || amount === undefined) return '0';
+  const formatCurrency = (amount: number) => {
     const currencySymbol : {[key: string] :string} = {
       USD: '$',
       PYG: '₲',
     };
-
+  
     return new Intl.NumberFormat('es-PY', {
       style: 'currency',
       currency: moneda,
-      currencyDisplay: 'narrowSymbol'
+      minimumFractionDigits: moneda === 'PYG' ? 0 : 2,
+      maximumFractionDigits: moneda === 'PYG' ? 0 : 2,
     }).format(amount).replace(/\s/g, '').replace(moneda, currencySymbol[moneda]);
-    }
-
-  const calcularImpuesto = (precio:  number, impuesto: string)=>{
-    switch(impuesto){
-      case '5%':
-        return{impuesto5: precio * 0.05, impuesto10:0, exentas:0};
-      case '10%':
-        return{impuesto5: 0, impuesto10: precio * 0.1, exentas:0};
-      case 'exentas':
-        return{impuesto5: 0, impuesto10: 0, exentas:precio};
-      default:
-        return{impuesto5: 0, impuesto10: 0, exentas:0};
   }
-}
 
-const calcularTotalImpuestos = ()=> {
-  const totalImpuesto5 = items.reduce((acc, item) => acc + item.impuesto5 * item.cantidad, 0);
-  const totalImpuesto10 = items.reduce((acc, item) => acc + item.impuesto10 * item.cantidad, 0);
-  const totalExentas = items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0);
-  const totalImpuestos = totalExentas + totalImpuesto5 + totalImpuesto10;
-  return totalImpuestos;
-}
+    const calcularImpuesto = (precio: number, impuesto: string) => {
+      switch(impuesto){
+        case '5%':
+          return {impuesto5: precio * 0.05, impuesto10: 0, exentas: 0};
+        case '10%':
+          return {impuesto5: 0, impuesto10: precio * 0.1, exentas: 0};
+        case 'exentas':
+          return {impuesto5: 0, impuesto10: 0, exentas: precio};
+        default:
+          return {impuesto5: 0, impuesto10: 0, exentas: 0};
+
+
+      }
+    }
+    const calcularTotalImpuestos = () => {
+      let totalImpuesto5 = 0;
+      let totalImpuesto10 = 0;
+      let totalExentas = 0;
+    
+      items.forEach((item) => {
+        const precioEnMonedaActual = item.precioOriginal * tasasDeCambio[moneda];
+        const impuestos = calcularImpuesto(precioEnMonedaActual, item.impuesto);
+    
+        totalImpuesto5 += impuestos.impuesto5 * item.cantidad;
+        totalImpuesto10 += impuestos.impuesto10 * item.cantidad;
+        totalExentas += impuestos.exentas * item.cantidad;
+      });
+    
+      return totalImpuesto5 + totalImpuesto10 + totalExentas;
+    };
 
   const agregarItem = () => {
     if (selectedItem) {
@@ -154,7 +164,7 @@ const calcularTotalImpuestos = ()=> {
         cantidad,
         impuesto: selectedItem.impuesto,
         ...impuestos ,
-        subtotal: (precioEnMonedaActual +(impuestos.impuesto5) + (impuestos.impuesto10) + (impuestos.exentas))* cantidad,
+        subtotal: (precioEnMonedaActual)* cantidad,
       }
       setItems([...items, nuevoItem])
       setArticuloBusqueda('')
@@ -295,24 +305,22 @@ const calcularTotalImpuestos = ()=> {
     fetchArticulos()
   }, [])
 
+
   useEffect(() => {
     setItems(prevItems => prevItems.map(item => {
-      const precioEnMonedaActual = item.precioOriginal * tasasDeCambio[moneda]
-      const impuestos = calcularImpuesto(precioEnMonedaActual, item.impuesto)
+      const precioEnMonedaActual = item.precioOriginal * tasasDeCambio[moneda];
+      const impuestos = calcularImpuesto(item.precioOriginal, item.impuesto);
       return {
         ...item,
         precioUnitario: precioEnMonedaActual,
-        impuesto: item.impuesto,
-        impuesto5: impuestos.impuesto5 * item.cantidad,
-        impuesto10: impuestos.impuesto10 * item.cantidad,
-        subtotal: precioEnMonedaActual * item.cantidad + (impuestos.impuesto5 * item.cantidad) + (impuestos.impuesto10 * item.cantidad) + (impuestos.exentas * item.cantidad),
+        ...impuestos,
+        subtotal: precioEnMonedaActual * item.cantidad,
       };
-    })
-    );
+    }));
     if (descuentoTipo === 'valor') {
-          setDescuentoValor(prevValor => prevValor * tasasDeCambio[moneda])
-        }
-      }, [moneda]);
+      setDescuentoValor(prevValor => prevValor / tasasDeCambio[moneda === 'USD' ? 'PYG' : 'USD'] * tasasDeCambio[moneda]);
+    }
+  }, [moneda]);
 
       const finalizarVenta = async () => {
         try {
@@ -429,6 +437,11 @@ const calcularTotalImpuestos = ()=> {
         if (credit===0) return 'gray.500';
         return 'green.500';
       };
+
+      const eliminarItem = (index: number) => {
+        setItems(items.filter((_, i) => i !== index));
+      }
+
 
   return (
     <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
@@ -622,27 +635,34 @@ const calcularTotalImpuestos = ()=> {
                 <Th>Código</Th>
                 <Th>Nombre</Th>
                 <Th isNumeric>Precio Unitario</Th>
+                <Th isNumeric>Cantidad</Th>
+                <Th isNumeric>Exentas</Th>
                 <Th isNumeric>5%</Th>
                 <Th isNumeric>10%</Th>
-                <Th isNumeric>Exentas</Th>
-                <Th isNumeric>Cantidad</Th>
-                <Th isNumeric>Subtotal</Th>
               </Tr>
             </Thead>
             <Tbody>
-            {items.map((item, index) => (
-              <Tr key={index}>
-                <Td>{item.id}</Td>
-                <Td>{item.nombre}</Td>
-                <Td isNumeric>{formatCurrency(item.precioUnitario)}</Td>
-                <Td isNumeric>{formatCurrency(item.impuesto5)}</Td>
-                <Td isNumeric>{formatCurrency(item.impuesto10)}</Td>
-                <Td isNumeric>{formatCurrency(item.exentas)}</Td>
-                <Td isNumeric>{item.cantidad}</Td>
-                <Td isNumeric>{formatCurrency(item.subtotal)}</Td>
-              </Tr>
-            ))}
-          </Tbody>
+              {items.map((item, index) => (
+                <Tr key={index}>
+                  <Td>{item.id}</Td>
+                  <Td>{item.nombre}</Td>
+                  <Td isNumeric>{formatCurrency(item.precioUnitario)}</Td>
+                  <Td isNumeric>{item.cantidad}</Td>
+                  <Td isNumeric>{formatCurrency(item.exentas)}</Td>
+                  <Td isNumeric>{formatCurrency(item.impuesto5*20)}</Td>
+                  <Td isNumeric>{formatCurrency(item.impuesto10*10)}</Td>
+                  <Td>
+                    <Button
+                      size="sm"
+                      colorScheme="red"
+                      onClick={() => eliminarItem(index)}
+                    >
+                      Eliminar
+                    </Button>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
           </Table>
         </Box>
       </Box>
@@ -732,11 +752,11 @@ const calcularTotalImpuestos = ()=> {
                   />
         </Flex>
         <Box>
+            <Text fontSize="md" fontWeight="bold">Total Exentas: {formatCurrency(items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0))}</Text>
+            <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
             <Text fontSize="md" fontWeight="bold">Total IVA 5%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto5 * item.cantidad, 0))}</Text>
             <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
             <Text fontSize="md" fontWeight="bold">Total IVA 10%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto10 * item.cantidad, 0))}</Text>
-            <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-            <Text fontSize="md" fontWeight="bold">Total Exentas: {formatCurrency(items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0))}</Text>
             <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
             <Text fontSize="md" fontWeight="bold">Total Impuestos: {formatCurrency(calcularTotalImpuestos())}</Text>
         </Box>
