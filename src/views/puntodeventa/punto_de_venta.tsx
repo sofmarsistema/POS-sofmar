@@ -135,13 +135,44 @@ export default function PuntoDeVenta() {
 
       }
     }
+
+    const calcularTotalExcentas =()=>{
+      let totalExentas= 0;
+      items.forEach((item)=>{
+        const precioEnMonedaActual = item.precioOriginal * tasasDeCambio[moneda];
+        const exentas = calcularImpuesto(precioEnMonedaActual, item.impuesto);
+        totalExentas += exentas.exentas * item.cantidad;
+      });
+      return totalExentas;
+    }
+
+    const calcularTotal5 = () => {
+      let totalImpuesto5 = 0;
+      items.forEach((item) => {
+        const precioEnMonedaActual = item.precioOriginal * tasasDeCambio[moneda];
+        const impuestos = calcularImpuesto(precioEnMonedaActual, item.impuesto);
+        totalImpuesto5 += impuestos.impuesto5 * item.cantidad;
+      });
+      return totalImpuesto5;
+    };
+
+    const calcularTotal10 = () => {
+      let totalImpuesto10 = 0;
+      items.forEach((item) => {
+        const precioEnMonedaActual = item.precioOriginal * tasasDeCambio[moneda];
+        const impuestos = calcularImpuesto(precioEnMonedaActual, item.impuesto);
+        totalImpuesto10 += impuestos.impuesto10 * item.cantidad;
+      });
+      return totalImpuesto10;
+    };
+
     const calcularTotalImpuestos = () => {
       let totalImpuesto5 = 0;
       let totalImpuesto10 = 0;
       let totalExentas = 0;
     
       items.forEach((item) => {
-        const precioEnMonedaActual = item.precioOriginal * tasasDeCambio[moneda];
+        const precioEnMonedaActual = item.precioOriginal* tasasDeCambio[moneda];
         const impuestos = calcularImpuesto(precioEnMonedaActual, item.impuesto);
     
         totalImpuesto5 += impuestos.impuesto5 * item.cantidad;
@@ -154,17 +185,19 @@ export default function PuntoDeVenta() {
 
   const agregarItem = () => {
     if (selectedItem) {
-      const precioEnMonedaActual = selectedItem.precio * tasasDeCambio[moneda]
-      const impuestos = calcularImpuesto(precioEnMonedaActual, selectedItem.impuesto)
+      const precioEnMonedaActual = selectedItem.precio * tasasDeCambio[moneda];
+      const impuestos = calcularImpuesto(selectedItem.precio, selectedItem.impuesto)
       const nuevoItem = {
         id: selectedItem.id,
         nombre: selectedItem.nombre,
         precioOriginal: selectedItem.precio,
         precioUnitario: precioEnMonedaActual,
-        cantidad,
+        cantidad: cantidad,
         impuesto: selectedItem.impuesto,
-        ...impuestos ,
-        subtotal: (precioEnMonedaActual)* cantidad,
+        impuesto5: impuestos.impuesto5,
+        impuesto10: impuestos.impuesto10,
+        exentas: impuestos.exentas,
+        subtotal: precioEnMonedaActual * cantidad,
       }
       setItems([...items, nuevoItem])
       setArticuloBusqueda('')
@@ -179,6 +212,7 @@ export default function PuntoDeVenta() {
       })
     }
   }
+  
 
   const calcularTotal = () => {
     const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
@@ -442,6 +476,11 @@ export default function PuntoDeVenta() {
         setItems(items.filter((_, i) => i !== index));
       }
 
+      const actualizarMoneda= (n:number)=>{
+        const precioEnMonedaActual = n * tasasDeCambio[moneda];
+        return precioEnMonedaActual;
+      }
+
 
   return (
     <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
@@ -648,9 +687,9 @@ export default function PuntoDeVenta() {
                   <Td>{item.nombre}</Td>
                   <Td isNumeric>{formatCurrency(item.precioUnitario)}</Td>
                   <Td isNumeric>{item.cantidad}</Td>
-                  <Td isNumeric>{formatCurrency(item.exentas)}</Td>
-                  <Td isNumeric>{formatCurrency(item.impuesto5*20)}</Td>
-                  <Td isNumeric>{formatCurrency(item.impuesto10*10)}</Td>
+                  <Td isNumeric>{formatCurrency(actualizarMoneda(item.exentas)*item.cantidad)}</Td>
+                  <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto5)*20*item.cantidad)}</Td>
+                  <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto10)*10*item.cantidad)}</Td>
                   <Td>
                     <Button
                       size="sm"
@@ -752,11 +791,11 @@ export default function PuntoDeVenta() {
                   />
         </Flex>
         <Box>
-            <Text fontSize="md" fontWeight="bold">Total Exentas: {formatCurrency(items.reduce((acc, item) => acc + item.exentas * item.cantidad, 0))}</Text>
+            <Text fontSize="md" fontWeight="bold">Total Exentas: {formatCurrency(calcularTotalExcentas())}</Text>
             <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-            <Text fontSize="md" fontWeight="bold">Total IVA 5%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto5 * item.cantidad, 0))}</Text>
+            <Text fontSize="md" fontWeight="bold">Total IVA 5%: {formatCurrency(calcularTotal5())}</Text>
             <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-            <Text fontSize="md" fontWeight="bold">Total IVA 10%: {formatCurrency(items.reduce((acc, item) => acc + item.impuesto10 * item.cantidad, 0))}</Text>
+            <Text fontSize="md" fontWeight="bold">Total IVA 10%: {formatCurrency(calcularTotal10())}</Text>
             <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
             <Text fontSize="md" fontWeight="bold">Total Impuestos: {formatCurrency(calcularTotalImpuestos())}</Text>
         </Box>
