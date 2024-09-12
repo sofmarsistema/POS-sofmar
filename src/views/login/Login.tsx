@@ -29,7 +29,7 @@ const Login: React.FC = () => {
         </Heading>
         <Text className='my-2 text-gray-500'>Ingresa tu correo y Contraseña en el formulario</Text>
       <Box
-        className="shadow-lg px-4 py-12 bg-white rounded-lg w-1/3 border"
+        className="shadow-lg px-4 py-12 bg-white rounded-lg md:w-1/3 sm:w-full border"
         borderRadius="lg"
         boxShadow="md"
       >
