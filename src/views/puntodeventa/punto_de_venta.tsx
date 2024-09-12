@@ -399,9 +399,9 @@ export default function PuntoDeVenta() {
                 cantidad: item.cantidad,
                 precio_unitario: item.precioUnitario,
                 subtotal: item.subtotal,
-                impuesto5: item.impuesto5,
-                impuesto10: item.impuesto10,
-                exentas: item.exentas
+                impuesto5: item.impuesto5*item.cantidad,
+                impuesto10: item.impuesto10*item.cantidad,
+                exentas: item.exentas*item.cantidad,
               });
       
             if (itemError) {
@@ -782,7 +782,7 @@ export default function PuntoDeVenta() {
                             onChange={(e)=> setDescuentoValor(parseInt(e.target.value))}
                             width={'150px'}
                             ml={2}
-                          />
+                        />
                 </Flex>
                 <Box>
                     <Text fontSize="md" fontWeight="bold">Total Exentas: {formatCurrency(calcularTotalExcentas())}</Text>

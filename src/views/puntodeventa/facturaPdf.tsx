@@ -233,8 +233,8 @@ export default function Invoice({ ventaId }: InvoiceProps) {
         <div>
             <h2 className="text-xl font-semibold mb-2">Totales</h2>
             <p>Total Exentas: {formatCurrency(totalExentas)}</p>
-            <p>Total 5%: {formatCurrency(total5)}</p>
-            <p>Total 10%: {formatCurrency(total10)}</p>
+            <p>Total 5%: {formatCurrency(total5/20)}</p>
+            <p>Total 10%: {formatCurrency(total10/10)}</p>
             <p className="font-bold">Total: {formatCurrency(venta.total)}</p>
         </div>
         
