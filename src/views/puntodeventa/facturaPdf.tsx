@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase";
 import { usePDF } from "react-to-pdf";
-import '../../index.css'
 import { Button } from "@chakra-ui/react";
 
 interface Cliente {
