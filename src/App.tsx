@@ -38,7 +38,6 @@ function App() {
   return (
     <>
       <PuntoDeVenta />
-      <button onClick={() => supabase.auth.signOut()}>Cerrar sesión</button>
     </>
   );
 }
