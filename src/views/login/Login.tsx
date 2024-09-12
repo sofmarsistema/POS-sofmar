@@ -23,11 +23,11 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Center className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
+    <Center className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-12">
         <Heading as="h2" size="lg" mb={4} textAlign="center" className='text-3xl font-bold tracking-tight text-foreground'>
           Iniciar Sesión
         </Heading>
-        <Text className='my-2 text-gray-500'>Ingresa tu correo y Contraseña en el formulario</Text>
+        <Text className='my-2 mb-4 text-gray-500'>Ingresa tu correo y Contraseña en el formulario</Text>
       <Box
         className="shadow-lg px-4 py-12 bg-white rounded-lg md:w-1/3 sm:w-full border"
         borderRadius="lg"
