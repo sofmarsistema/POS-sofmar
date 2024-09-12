@@ -18,14 +18,18 @@ import {
   useToast, 
   Text, 
   useMediaQuery,
-  Divider
+  Divider,
+  ChakraProvider,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
 } from '@chakra-ui/react'
-import {createClient} from '@supabase/supabase-js'
-
-const supabaseUrl = 'https://mwjeyvhpyulgczpqxgtb.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13amV5dmhweXVsZ2N6cHF4Z3RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU4OTU5NDksImV4cCI6MjA0MTQ3MTk0OX0.HKoJXsJKh-0L3uzwz-uATxvV1MzUR3NUfX_NJvlVmQU'
-
-const supabase = createClient(supabaseUrl, supabaseKey)
+import {supabase} from '@/utils/supabase'
+import Invoice from './facturaPdf'
 
 interface Sucursal {
   id: number
@@ -59,23 +63,13 @@ interface Articulo {
   stock: number
 }
 
-// interface ItemVenta {
-//   id: number
-//   nombre: string
-//   precioUnitario: number
-//   cantidad: number
-//   subtotal: number
-//   impuesto: string
-//   impuesto5: number
-//   impuesto10: number
-//   exentas: number
-//   precioOriginal: number
-// }
 
 const tasasDeCambio: { [key: string]: number } = {
   USD: 1,
   PYG: 7300,
 }
+
+
 
 export default function PuntoDeVenta() {
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
@@ -83,7 +77,6 @@ export default function PuntoDeVenta() {
   const [vendedores, setVendedores] = useState<Vendedor[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [articulos, setArticulos] = useState<Articulo[]>([])
-
   const [sucursal, setSucursal] = useState('Central')
   const [deposito, setDeposito] = useState('Principal')
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
@@ -104,7 +97,8 @@ export default function PuntoDeVenta() {
   const [descuentoValor, setDescuentoValor] = useState(0)
   const [buscarVendedor, setBuscarVendedor] = useState('')
   const [recomedacionesVendedores, setRecomendacionesVendedores] = useState<typeof vendedores>([])
-
+  const [showInvoice, setShowInvoice]= useState(false)
+  const [ newSaleId, setNewSaleID]= useState<number | null>(null)
   const toast = useToast()
 
   const formatCurrency = (amount: number) => {
@@ -182,6 +176,7 @@ export default function PuntoDeVenta() {
     
       return totalImpuesto5 + totalImpuesto10 + totalExentas;
     };
+
 
   const agregarItem = () => {
     if (selectedItem) {
@@ -390,9 +385,9 @@ export default function PuntoDeVenta() {
             throw ventaError;
           }
       
-          console.log('Venta insertada:', ventaData);
       
           const ventaId = ventaData[0].id;
+          setNewSaleID(ventaId)
       
           for (const item of items) {
             console.log('Insertando item:', item);
@@ -413,8 +408,6 @@ export default function PuntoDeVenta() {
               console.error('Error al insertar item:', itemError);
               throw itemError;
             }
-      
-            console.log('Actualizando stock del artículo:', item.id);
             const { error: stockError } = await supabase
               .rpc('subtract_stock', { item_id: item.id, quantity: item.cantidad });
       
@@ -426,14 +419,12 @@ export default function PuntoDeVenta() {
       
           if (condicionVenta === 1 && clienteSeleccionado) {
             const nuevoCredito = (clienteSeleccionado.linea_credito||0) - total;
-            console.log('Actualizando línea de crédito:', { clienteId: clienteSeleccionado.id, nuevoCredito });
             const { error: creditoError } = await supabase
               .from('clientes')
               .update({ linea_credito: nuevoCredito })
               .eq('id', clienteSeleccionado.id);
       
             if (creditoError) {
-              console.error('Error al actualizar línea de crédito:', creditoError);
               throw creditoError;
             }
           }
@@ -453,6 +444,8 @@ export default function PuntoDeVenta() {
             duration: 3000,
             isClosable: true,
           });
+
+          setShowInvoice(true);
         } catch (error) {
           console.error('Error detallado al finalizar la venta:', error);
           toast({
@@ -481,331 +474,352 @@ export default function PuntoDeVenta() {
         return precioEnMonedaActual;
       }
 
-
   return (
-    <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
-      <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile ? 4 : 6} alignItems="center" rounded="lg">
-        <ShoppingCart size={24} className="mr-2" />
-        <Heading size={isMobile ? 'md' : 'lg'}>Punto de Venta</Heading>
-      </Flex>
-      <Box p={isMobile ? 2 : 6}>
-        <Grid templateColumns={isMobile ? "repeat(1, 1fr)" : "repeat(3, 1fr)"} gap={4} mb={6}>
-          <Box>
-            <FormLabel>Sucursal</FormLabel>
-            <Select placeholder="Seleccionar sucursal" value={sucursal} onChange={(e) => setSucursal(e.target.value)}>
-              {sucursales.map((sucursal) => (
-                <option key={sucursal.id} value={sucursal.id.toString()}>{sucursal.nombre}</option>
-              ))}
-            </Select>
-          </Box>
-          <Box>
-            <FormLabel>Depósito</FormLabel>
-            <Select placeholder="Seleccionar depósito" value={deposito} onChange={(e) => setDeposito(e.target.value)}>
-              {depositos.map((deposito) => (
-                <option key={deposito.id} value={deposito.id.toString()}>{deposito.nombre}</option>
-              ))}
-            </Select>
-          </Box>
-          <Box>
-            <FormLabel>Fecha</FormLabel>
-            <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
-          </Box>
-          <Box>
-            <FormLabel>Moneda</FormLabel>
-            <Select placeholder="Seleccionar moneda" value={moneda} onChange={(e) => setMoneda(e.target.value)}>
-              <option value="USD">USD</option>
-              <option value="PYG">PYG</option>
-            </Select>
-          </Box>
-          <Box position={'relative'}>
-            <FormLabel>Vendedor</FormLabel>
-            <Input
-              id='vendedor-search'
-              placeholder="Buscar vendedor por código"
-              value={buscarVendedor}
-              onChange={handleBusquedaVendedor}
-              aria-autocomplete="list"
-              aria-controls="vendedor-recommendations"
-            />
-            {recomedacionesVendedores.length>0&&(
-              <Box
-              id="vendedor-recommendations"
-              position="absolute"
-              top="100%"
-              left={0}
-              right={0}
-              zIndex={20}
-              bg="white"
-              boxShadow="md"
-              borderRadius="md"
-              mt={1}
-              className="recomendaciones-menu"
-              maxH="200px"
-              overflowY="auto"
-              >
-                {recomedacionesVendedores.map((vendedor) => (
-                  <Box
-                    key={vendedor.id}
-                    p={2}
-                    _hover={{ bg: 'gray.100' }}
-                    cursor="pointer"
-                    onClick={() => {
-                      setBuscarVendedor(vendedor.codigo)
-                      setVendedor(vendedor.id.toString())
-                      setRecomendacionesVendedores([])
-                    }}
-                  >
-                    <Text fontWeight="bold">{vendedor.nombre}</Text>
-                    <Text as="span" color="gray.500" fontSize="sm">Código: {vendedor.codigo}</Text>
+    <div>
+          <ChakraProvider>
+              <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
+              <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile ? 4 : 6} alignItems="center" rounded="lg">
+                <ShoppingCart size={24} className="mr-2" />
+                <Heading size={isMobile ? 'md' : 'lg'}>Punto de Venta</Heading>
+              </Flex>
+              <Box p={isMobile ? 2 : 6}>
+                <Grid templateColumns={isMobile ? "repeat(1, 1fr)" : "repeat(3, 1fr)"} gap={4} mb={6}>
+                  <Box>
+                    <FormLabel>Sucursal</FormLabel>
+                    <Select placeholder="Seleccionar sucursal" value={sucursal} onChange={(e) => setSucursal(e.target.value)}>
+                      {sucursales.map((sucursal) => (
+                        <option key={sucursal.id} value={sucursal.id.toString()}>{sucursal.nombre}</option>
+                      ))}
+                    </Select>
                   </Box>
-                ))}
-              </Box>
-            )}
-          </Box>
-          <Box position="relative">
-            <FormLabel htmlFor="cliente-search">Cliente</FormLabel>
-            <Input 
-              id="cliente-search"
-              placeholder="Buscar cliente por nombre o RUC" 
-              value={clienteBusqueda} 
-              onChange={handleBusquedaCliente}
-              aria-autocomplete="list"
-              aria-controls="cliente-recommendations"
-            />
-            {recomendacionesClientes.length > 0 && (
-              <Box
-                id="cliente-recommendations"
-                position="absolute"
-                top="100%"
-                left={0}
-                right={0}
-                zIndex={10}
-                bg="white"
-                boxShadow="md"
-                borderRadius="md"
-                mt={1}
-                className="recomendaciones-menu"
-                maxH="200px"
-                overflowY="auto"
-              >
-                {recomendacionesClientes.map((cliente) => {
-            const credit = Number(cliente.linea_credito) || 0;
-            const creditColor = getCreditColor(credit);
+                  <Box>
+                    <FormLabel>Depósito</FormLabel>
+                    <Select placeholder="Seleccionar depósito" value={deposito} onChange={(e) => setDeposito(e.target.value)}>
+                      {depositos.map((deposito) => (
+                        <option key={deposito.id} value={deposito.id.toString()}>{deposito.nombre}</option>
+                      ))}
+                    </Select>
+                  </Box>
+                  <Box>
+                    <FormLabel>Fecha</FormLabel>
+                    <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+                  </Box>
+                  <Box>
+                    <FormLabel>Moneda</FormLabel>
+                    <Select placeholder="Seleccionar moneda" value={moneda} onChange={(e) => setMoneda(e.target.value)}>
+                      <option value="USD">USD</option>
+                      <option value="PYG">PYG</option>
+                    </Select>
+                  </Box>
+                  <Box position={'relative'}>
+                    <FormLabel>Vendedor</FormLabel>
+                    <Input
+                      id='vendedor-search'
+                      placeholder="Buscar vendedor por código"
+                      value={buscarVendedor}
+                      onChange={handleBusquedaVendedor}
+                      aria-autocomplete="list"
+                      aria-controls="vendedor-recommendations"
+                    />
+                    {recomedacionesVendedores.length>0&&(
+                      <Box
+                      id="vendedor-recommendations"
+                      position="absolute"
+                      top="100%"
+                      left={0}
+                      right={0}
+                      zIndex={20}
+                      bg="white"
+                      boxShadow="md"
+                      borderRadius="md"
+                      mt={1}
+                      className="recomendaciones-menu"
+                      maxH="200px"
+                      overflowY="auto"
+                      >
+                        {recomedacionesVendedores.map((vendedor) => (
+                          <Box
+                            key={vendedor.id}
+                            p={2}
+                            _hover={{ bg: 'gray.100' }}
+                            cursor="pointer"
+                            onClick={() => {
+                              setBuscarVendedor(vendedor.codigo)
+                              setVendedor(vendedor.id.toString())
+                              setRecomendacionesVendedores([])
+                            }}
+                          >
+                            <Text fontWeight="bold">{vendedor.nombre}</Text>
+                            <Text as="span" color="gray.500" fontSize="sm">Código: {vendedor.codigo}</Text>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                  <Box position="relative">
+                    <FormLabel htmlFor="cliente-search">Cliente</FormLabel>
+                    <Input 
+                      id="cliente-search"
+                      placeholder="Buscar cliente por nombre o RUC" 
+                      value={clienteBusqueda} 
+                      onChange={handleBusquedaCliente}
+                      aria-autocomplete="list"
+                      aria-controls="cliente-recommendations"
+                    />
+                    {recomendacionesClientes.length > 0 && (
+                      <Box
+                        id="cliente-recommendations"
+                        position="absolute"
+                        top="100%"
+                        left={0}
+                        right={0}
+                        zIndex={10}
+                        bg="white"
+                        boxShadow="md"
+                        borderRadius="md"
+                        mt={1}
+                        className="recomendaciones-menu"
+                        maxH="200px"
+                        overflowY="auto"
+                      >
+                        {recomendacionesClientes.map((cliente) => {
+                    const credit = Number(cliente.linea_credito) || 0;
+                    const creditColor = getCreditColor(credit);
 
-            return (
-              <Box
-                key={cliente.id}
-                p={2}
-                _hover={{ bg: 'gray.100' }}
-                cursor="pointer"
-                onClick={() => {
-                  setClienteBusqueda(cliente.nombre);
-                  setClienteSeleccionado(cliente);
-                  setRecomendacionesClientes([]);
-                }}
-              >
-                <Text fontWeight="bold">{cliente.nombre}</Text>
-                <Text as="span" color="gray.500" fontSize="sm">RUC: {cliente.ruc}</Text>
-                <Text as="span" color={creditColor} fontSize="sm" ml={2}>Línea de crédito: {formatCurrency(credit)}</Text>
+                    return (
+                      <Box
+                        key={cliente.id}
+                        p={2}
+                        _hover={{ bg: 'gray.100' }}
+                        cursor="pointer"
+                        onClick={() => {
+                          setClienteBusqueda(cliente.nombre);
+                          setClienteSeleccionado(cliente);
+                          setRecomendacionesClientes([]);
+                        }}
+                      >
+                        <Text fontWeight="bold">{cliente.nombre}</Text>
+                        <Text as="span" color="gray.500" fontSize="sm">RUC: {cliente.ruc}</Text>
+                        <Text as="span" color={creditColor} fontSize="sm" ml={2}>Línea de crédito: {formatCurrency(credit)}</Text>
+                      </Box>
+                    );
+                  })}
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+                <Flex gap={4} mb={6} flexDirection={isMobile ? 'column' : 'row'}>
+                  <Box position="relative" flexGrow={1}>
+                    <Input 
+                      placeholder="Buscar artículo" 
+                      value={articuloBusqueda} 
+                      onChange={handleBusqueda}
+                    />
+                    {recomendaciones.length > 0 && (
+                      <Box
+                        position={'absolute'}
+                        top={'100%'}
+                        left={0}
+                        zIndex={1}
+                        width={'100%'}
+                        bg={'white'}
+                        boxShadow={'md'}
+                        borderRadius={'md'}
+                        className="recomendaciones-menu"
+                      >
+                        {recomendaciones.map((articulo) => (
+                          <Box
+                            key={articulo.id}
+                            p={2}
+                            _hover={{bg: 'gray.100'}}
+                            onClick={() => {
+                              setArticuloBusqueda(articulo.nombre)
+                              setSelectedItem(articulo)
+                              setRecomendaciones([])
+                            }}
+                          >
+                            <Flex >
+                            {articulo.nombre}
+                              <Text as="span" color="gray.500" fontSize={'12px'}>//Codigo: {articulo.codigo}</Text>
+                              <Text as="span" color="gray.500" fontSize={'12px'}>//Precio: {articulo.precio}</Text>
+                              <Text as="span" color="gray.500" fontSize={'12px'}>//Stock: {articulo.stock}</Text>
+                            </Flex>
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                  <Input 
+                    type="number" 
+                    placeholder="Cantidad" 
+                    value={cantidad} 
+                    onChange={(e) => setCantidad(parseInt(e.target.value))}
+                    width={isMobile ? "full" : "80px"}
+                    min={1}
+                  />
+                  <Button colorScheme="green" onClick={agregarItem} flexShrink={0}>
+                    <Search size={20} className="mr-2" /> Agregar
+                  </Button>
+                </Flex>
+                <Box overflowX={'auto'}>
+                  <Table variant="striped">
+                    <Thead>
+                      <Tr>
+                        <Th>Código</Th>
+                        <Th>Nombre</Th>
+                        <Th isNumeric>Precio Unitario</Th>
+                        <Th isNumeric>Cantidad</Th>
+                        <Th isNumeric>Exentas</Th>
+                        <Th isNumeric>5%</Th>
+                        <Th isNumeric>10%</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {items.map((item, index) => (
+                        <Tr key={index}>
+                          <Td>{item.id}</Td>
+                          <Td>{item.nombre}</Td>
+                          <Td isNumeric>{formatCurrency(item.precioUnitario)}</Td>
+                          <Td isNumeric>{item.cantidad}</Td>
+                          <Td isNumeric>{formatCurrency(actualizarMoneda(item.exentas)*item.cantidad)}</Td>
+                          <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto5)*20*item.cantidad)}</Td>
+                          <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto10)*10*item.cantidad)}</Td>
+                          <Td>
+                            <Button
+                              size="sm"
+                              colorScheme="red"
+                              onClick={() => eliminarItem(index)}
+                            >
+                              Eliminar
+                            </Button>
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                </Box>
               </Box>
-            );
-          })}
-              </Box>
-            )}
-          </Box>
-        </Grid>
-        <Flex gap={4} mb={6} flexDirection={isMobile ? 'column' : 'row'}>
-          <Box position="relative" flexGrow={1}>
-            <Input 
-              placeholder="Buscar artículo" 
-              value={articuloBusqueda} 
-              onChange={handleBusqueda}
-            />
-            {recomendaciones.length > 0 && (
-              <Box
-                position={'absolute'}
-                top={'100%'}
-                left={0}
-                zIndex={1}
-                width={'100%'}
-                bg={'white'}
-                boxShadow={'md'}
-                borderRadius={'md'}
-                className="recomendaciones-menu"
-              >
-                {recomendaciones.map((articulo) => (
-                  <Box
-                    key={articulo.id}
-                    p={2}
-                    _hover={{bg: 'gray.100'}}
-                    onClick={() => {
-                      setArticuloBusqueda(articulo.nombre)
-                      setSelectedItem(articulo)
-                      setRecomendaciones([])
-                    }}
-                  >
-                    <Flex >
-                    {articulo.nombre}
-                      <Text as="span" color="gray.500" fontSize={'12px'}>//Codigo: {articulo.codigo}</Text>
-                      <Text as="span" color="gray.500" fontSize={'12px'}>//Precio: {articulo.precio}</Text>
-                      <Text as="span" color="gray.500" fontSize={'12px'}>//Stock: {articulo.stock}</Text>
+              <Flex justify="space-between" p={isMobile ? 2 : 6} bg="gray.50" rounded="lg" flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 4 : 0}>
+                <Flex flexDirection={isMobile ? 'column' : 'row'} gap={4}>
+                  <Box>
+                    <Text fontWeight={'bold'} mb={2}>Condición de Venta</Text>
+                    <Flex flexDir={isMobile ? 'column' : 'row'} gap={2}>
+                      <Button 
+                        variant={condicionVenta === 0 ? 'solid' : 'outline'}
+                        bg={condicionVenta === 0 ? 'blue.500' : 'transparent'}
+                        color={condicionVenta === 0 ? 'white' : 'blue.500'}
+                        borderColor="blue.500"
+                        _hover={{
+                          bg: condicionVenta === 0 ? 'blue.600' : 'blue.50',
+                        }}
+                        onClick={() => setCondicionVenta(0)}
+                        width={isMobile ? "full" : "auto"}
+                      >
+                        Contado
+                      </Button>
+                      <Button 
+                        variant={condicionVenta === 1 ? 'solid' : 'outline'}
+                        bg={condicionVenta === 1 ? 'blue.500' : 'transparent'}
+                        color={condicionVenta === 1 ? 'white' : 'blue.500'}
+                        borderColor="blue.500"
+                        _hover={{
+                          bg: condicionVenta === 1 ? 'blue.600' : 'blue.50',
+                        }}
+                        onClick={() => setCondicionVenta(1)}
+                        width={isMobile ? "full" : "auto"}
+                        isDisabled={!clienteSeleccionado || clienteSeleccionado.linea_credito <= 0}
+                      >
+                        Crédito
+                      </Button>
                     </Flex>
                   </Box>
-                ))}
-              </Box>
-            )}
-          </Box>
-          <Input 
-            type="number" 
-            placeholder="Cantidad" 
-            value={cantidad} 
-            onChange={(e) => setCantidad(parseInt(e.target.value))}
-            width={isMobile ? "full" : "80px"}
-            min={1}
-          />
-          <Button colorScheme="green" onClick={agregarItem} flexShrink={0}>
-            <Search size={20} className="mr-2" /> Agregar
-          </Button>
-        </Flex>
-        <Box overflowX={'auto'}>
-          <Table variant="striped">
-            <Thead>
-              <Tr>
-                <Th>Código</Th>
-                <Th>Nombre</Th>
-                <Th isNumeric>Precio Unitario</Th>
-                <Th isNumeric>Cantidad</Th>
-                <Th isNumeric>Exentas</Th>
-                <Th isNumeric>5%</Th>
-                <Th isNumeric>10%</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {items.map((item, index) => (
-                <Tr key={index}>
-                  <Td>{item.id}</Td>
-                  <Td>{item.nombre}</Td>
-                  <Td isNumeric>{formatCurrency(item.precioUnitario)}</Td>
-                  <Td isNumeric>{item.cantidad}</Td>
-                  <Td isNumeric>{formatCurrency(actualizarMoneda(item.exentas)*item.cantidad)}</Td>
-                  <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto5)*20*item.cantidad)}</Td>
-                  <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto10)*10*item.cantidad)}</Td>
-                  <Td>
-                    <Button
-                      size="sm"
-                      colorScheme="red"
-                      onClick={() => eliminarItem(index)}
-                    >
-                      Eliminar
-                    </Button>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </Box>
-      </Box>
-      <Flex justify="space-between" p={isMobile ? 2 : 6} bg="gray.50" rounded="lg" flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 4 : 0}>
-        <Flex flexDirection={isMobile ? 'column' : 'row'} gap={4}>
-          <Box>
-            <Text fontWeight={'bold'} mb={2}>Condición de Venta</Text>
-            <Flex flexDir={isMobile ? 'column' : 'row'} gap={2}>
-              <Button 
-                variant={condicionVenta === 0 ? 'solid' : 'outline'}
-                bg={condicionVenta === 0 ? 'blue.500' : 'transparent'}
-                color={condicionVenta === 0 ? 'white' : 'blue.500'}
-                borderColor="blue.500"
-                _hover={{
-                  bg: condicionVenta === 0 ? 'blue.600' : 'blue.50',
-                }}
-                onClick={() => setCondicionVenta(0)}
-                width={isMobile ? "full" : "auto"}
-              >
-                Contado
+                  <Box>
+                    <Text fontWeight="bold" mb={2}>Nota Fiscal</Text>
+                    <Flex flexDirection={isMobile ? 'column' : 'row'} gap={2}>
+                      <Button 
+                        variant={notaFiscal === 0 ? 'solid' : 'outline'}
+                        bg={notaFiscal === 0 ? 'blue.500' : 'transparent'}
+                        color={notaFiscal === 0 ? 'white' : 'blue.500'}
+                        borderColor="blue.500"
+                        _hover={{
+                          bg: notaFiscal === 0 ? 'blue.600' : 'blue.50',
+                        }}
+                        onClick={() => setNotaFiscal(0)}
+                        width={isMobile ? "full" : "auto"}
+                      >
+                        Factura
+                      </Button>
+                      <Button 
+                        variant={notaFiscal === 1 ? 'solid' : 'outline'}
+                        bg={notaFiscal === 1 ? 'blue.500' : 'transparent'}
+                        color={notaFiscal === 1 ? 'white' : 'blue.500'}
+                        borderColor="blue.500"
+                        _hover={{
+                          bg: notaFiscal === 1 ? 'blue.600' : 'blue.50',
+                        }}
+                        onClick={() => setNotaFiscal(1)}
+                        width={isMobile ? "full" : "auto"}
+                      >
+                        Nota Comun
+                      </Button>
+                    </Flex>
+                  </Box>
+                </Flex>
+                <Flex mt={isMobile ? 4 : 0} gap={4} flexDirection={isMobile? 'row': 'column'} alignItems={'center'}>
+                <Text fontSize="lg" fontWeight={'bold'}>Descuento</Text>
+                  <Select value={descuentoTipo}
+                          onChange={(e)=> {
+                            setDescuentoTipo(e.target.value as 'porcentaje' | 'valor')
+                            setDescuentoValor(0)
+                          }} width={'150px'}>
+                            <option value="porcentaje">Porcentaje</option>
+                            <option value="monto">Monto</option>
+                          </Select>
+                          <Input
+                            type='number'
+                            placeholder='Descuento'
+                            value={descuentoValor}
+                            onChange={(e)=> setDescuentoValor(parseInt(e.target.value))}
+                            width={'150px'}
+                            ml={2}
+                          />
+                </Flex>
+                <Box>
+                    <Text fontSize="md" fontWeight="bold">Total Exentas: {formatCurrency(calcularTotalExcentas())}</Text>
+                    <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
+                    <Text fontSize="md" fontWeight="bold">Total IVA 5%: {formatCurrency(calcularTotal5())}</Text>
+                    <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
+                    <Text fontSize="md" fontWeight="bold">Total IVA 10%: {formatCurrency(calcularTotal10())}</Text>
+                    <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
+                    <Text fontSize="md" fontWeight="bold">Total Impuestos: {formatCurrency(calcularTotalImpuestos())}</Text>
+                </Box>
+                <Box textAlign={isMobile ? "left" : "right"}>
+                  <Text fontSize="lg" fontWeight="bold">Subtotal: {formatCurrency(items.reduce((acc, item) => acc + item.subtotal, 0))}</Text>
+                  <Text fontSize="lg" fontWeight="bold">Descuento: {descuentoTipo === 'porcentaje' ? `${descuentoValor}%` : formatCurrency(descuentoValor*tasasDeCambio[moneda])}</Text>
+                  <Text fontSize="lg" fontWeight="bold">Total Neto: {formatCurrency(calcularTotal())}</Text>
+                  <Button colorScheme="blue" mt={4} width={isMobile ? "full" : "auto"} onClick={finalizarVenta}>Finalizar Venta</Button>
+                </Box>
+              </Flex>
+              
+            </Box>
+            <Modal isOpen={showInvoice} onClose={() => setShowInvoice(false)} size="full">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Factura</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              {newSaleId && <Invoice ventaId={newSaleId} />}
+            </ModalBody>
+            <ModalFooter>
+              <Button colorScheme="blue" mr={3} onClick={() => setShowInvoice(false)}>
+                Cerrar
               </Button>
-              <Button 
-                variant={condicionVenta === 1 ? 'solid' : 'outline'}
-                bg={condicionVenta === 1 ? 'blue.500' : 'transparent'}
-                color={condicionVenta === 1 ? 'white' : 'blue.500'}
-                borderColor="blue.500"
-                _hover={{
-                  bg: condicionVenta === 1 ? 'blue.600' : 'blue.50',
-                }}
-                onClick={() => setCondicionVenta(1)}
-                width={isMobile ? "full" : "auto"}
-                isDisabled={!clienteSeleccionado || clienteSeleccionado.linea_credito <= 0}
-              >
-                Crédito
-              </Button>
-            </Flex>
-          </Box>
-          <Box>
-            <Text fontWeight="bold" mb={2}>Nota Fiscal</Text>
-            <Flex flexDirection={isMobile ? 'column' : 'row'} gap={2}>
-              <Button 
-                variant={notaFiscal === 0 ? 'solid' : 'outline'}
-                bg={notaFiscal === 0 ? 'blue.500' : 'transparent'}
-                color={notaFiscal === 0 ? 'white' : 'blue.500'}
-                borderColor="blue.500"
-                _hover={{
-                  bg: notaFiscal === 0 ? 'blue.600' : 'blue.50',
-                }}
-                onClick={() => setNotaFiscal(0)}
-                width={isMobile ? "full" : "auto"}
-              >
-                Factura
-              </Button>
-              <Button 
-                variant={notaFiscal === 1 ? 'solid' : 'outline'}
-                bg={notaFiscal === 1 ? 'blue.500' : 'transparent'}
-                color={notaFiscal === 1 ? 'white' : 'blue.500'}
-                borderColor="blue.500"
-                _hover={{
-                  bg: notaFiscal === 1 ? 'blue.600' : 'blue.50',
-                }}
-                onClick={() => setNotaFiscal(1)}
-                width={isMobile ? "full" : "auto"}
-              >
-                Nota Interna
-              </Button>
-            </Flex>
-          </Box>
-        </Flex>
-        <Flex mt={isMobile ? 4 : 0} gap={4} flexDirection={isMobile? 'row': 'column'} alignItems={'center'}>
-        <Text fontSize="lg" fontWeight={'bold'}>Descuento</Text>
-          <Select value={descuentoTipo}
-                  onChange={(e)=> {
-                    setDescuentoTipo(e.target.value as 'porcentaje' | 'valor')
-                    setDescuentoValor(0)
-                  }} width={'150px'}>
-                    <option value="porcentaje">Porcentaje</option>
-                    <option value="monto">Monto</option>
-                  </Select>
-                  <Input
-                    type='number'
-                    placeholder='Descuento'
-                    value={descuentoValor}
-                    onChange={(e)=> setDescuentoValor(parseInt(e.target.value))}
-                    width={'150px'}
-                    ml={2}
-                  />
-        </Flex>
-        <Box>
-            <Text fontSize="md" fontWeight="bold">Total Exentas: {formatCurrency(calcularTotalExcentas())}</Text>
-            <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-            <Text fontSize="md" fontWeight="bold">Total IVA 5%: {formatCurrency(calcularTotal5())}</Text>
-            <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-            <Text fontSize="md" fontWeight="bold">Total IVA 10%: {formatCurrency(calcularTotal10())}</Text>
-            <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-            <Text fontSize="md" fontWeight="bold">Total Impuestos: {formatCurrency(calcularTotalImpuestos())}</Text>
-        </Box>
-        <Box textAlign={isMobile ? "left" : "right"}>
-          <Text fontSize="lg" fontWeight="bold">Subtotal: {formatCurrency(items.reduce((acc, item) => acc + item.subtotal, 0))}</Text>
-          <Text fontSize="lg" fontWeight="bold">Descuento: {descuentoTipo === 'porcentaje' ? `${descuentoValor}%` : formatCurrency(descuentoValor*tasasDeCambio[moneda])}</Text>
-          <Text fontSize="lg" fontWeight="bold">Total Neto: {formatCurrency(calcularTotal())}</Text>
-          <Button colorScheme="blue" mt={4} width={isMobile ? "full" : "auto"} onClick={finalizarVenta}>Finalizar Venta</Button>
-        </Box>
-      </Flex>
-    </Box>
-  )
+              {/* You can add a print button here if needed */}
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+          </ChakraProvider>
+    </div>
+  
+)
 }

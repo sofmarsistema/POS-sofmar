@@ -1,12 +1,12 @@
-import PuntoDeVenta from "./views/puntodeventa/punto_de_venta"
-import { ChakraProvider } from "@chakra-ui/react"
-
+import Invoice from './views/puntodeventa/facturaPdf'
+import PuntoDeVenta from './views/puntodeventa/punto_de_venta'
+import './index.css'
 function App() {
 
   return (
-    <ChakraProvider>
-      <PuntoDeVenta />
-    </ChakraProvider>
+      <>
+        <PuntoDeVenta /> 
+      </>
   )
 }
 
