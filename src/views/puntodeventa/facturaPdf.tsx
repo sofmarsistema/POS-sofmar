@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase";
 import { usePDF } from "react-to-pdf";
+
 import { Button } from "@chakra-ui/react";
 
 interface Cliente {
@@ -16,7 +17,8 @@ interface Venta {
   deposito_id: number;
   vendedor_id: number;
   cliente_id: number;
-  condicion: string;
+  condicion: number;
+  nota_fiscal:number;
   total: number;
 }
 
@@ -181,7 +183,7 @@ export default function Invoice({ ventaId }: InvoiceProps) {
   return (
     <div>
         <div className="p-8 max-w-4xl mx-auto" ref={targetRef}>
-        <h1 className="text-3xl font-bold mb-6">Factura</h1>
+        <h1 className="text-3xl font-bold mb-6">{venta.nota_fiscal=== 0? 'Factura': 'Nota Interna'}</h1>
         
         <div className="mb-6">
             <h2 className="text-xl font-semibold mb-2">Datos de la Venta</h2>
@@ -189,7 +191,7 @@ export default function Invoice({ ventaId }: InvoiceProps) {
             <p>Sucursal: {sucursal?.nombre || 'N/A'}</p>
             <p>Depósito: {deposito?.nombre || 'N/A'}</p>
             <p>Vendedor: {vendedor?.nombre || 'N/A'}</p>
-            <p>Condición: {venta.condicion || 'N/A'}</p>
+            <p>Condición: {venta.condicion===0? 'Credito': 'Contado' || 'N/A'}</p>
         </div>
 
         <div className="mb-6">

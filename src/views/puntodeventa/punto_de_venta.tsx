@@ -65,8 +65,8 @@ interface Articulo {
 
 
 const tasasDeCambio: { [key: string]: number } = {
-  USD: 1,
-  PYG: 7300,
+  USD: 0.00013,
+  PYG: 1,
 }
 
 
@@ -118,9 +118,9 @@ export default function PuntoDeVenta() {
     const calcularImpuesto = (precio: number, impuesto: string) => {
       switch(impuesto){
         case '5%':
-          return {impuesto5: precio * 0.05, impuesto10: 0, exentas: 0};
+          return {impuesto5: precio * 1, impuesto10: 0, exentas: 0};
         case '10%':
-          return {impuesto5: 0, impuesto10: precio * 0.1, exentas: 0};
+          return {impuesto5: 0, impuesto10: precio * 1, exentas: 0};
         case 'exentas':
           return {impuesto5: 0, impuesto10: 0, exentas: precio};
         default:
@@ -682,8 +682,8 @@ export default function PuntoDeVenta() {
                           <Td isNumeric>{formatCurrency(item.precioUnitario)}</Td>
                           <Td isNumeric>{item.cantidad}</Td>
                           <Td isNumeric>{formatCurrency(actualizarMoneda(item.exentas)*item.cantidad)}</Td>
-                          <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto5)*20*item.cantidad)}</Td>
-                          <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto10)*10*item.cantidad)}</Td>
+                          <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto5)*item.cantidad)}</Td>
+                          <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto10)*item.cantidad)}</Td>
                           <Td>
                             <Button
                               size="sm"
@@ -787,9 +787,9 @@ export default function PuntoDeVenta() {
                 <Box>
                     <Text fontSize="md" fontWeight="bold">Total Exentas: {formatCurrency(calcularTotalExcentas())}</Text>
                     <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-                    <Text fontSize="md" fontWeight="bold">Total IVA 5%: {formatCurrency(calcularTotal5())}</Text>
+                    <Text fontSize="md" fontWeight="bold">Total IVA 5%: {formatCurrency(calcularTotal5()/20)}</Text>
                     <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-                    <Text fontSize="md" fontWeight="bold">Total IVA 10%: {formatCurrency(calcularTotal10())}</Text>
+                    <Text fontSize="md" fontWeight="bold">Total IVA 10%: {formatCurrency(calcularTotal10()/10)}</Text>
                     <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
                     <Text fontSize="md" fontWeight="bold">Total Impuestos: {formatCurrency(calcularTotalImpuestos())}</Text>
                 </Box>
