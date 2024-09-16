@@ -68,7 +68,7 @@ const tasasDeCambio: { [key: string]: number } = {
   PYG: 1,
 }
 
-const API_BASE_URL = 'https://localhost:4000/api'
+const API_BASE_URL = 'https://db.sofmar.com.py:4008'
 
 const fetchData = async (endpoint: string, token: string) => {
   try {

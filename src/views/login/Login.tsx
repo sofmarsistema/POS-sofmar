@@ -16,10 +16,14 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const inputPassRef = useRef<HTMLInputElement>(null)
   const btnIngresarRef = useRef<HTMLButtonElement>(null)
 
+  const api = axios.create({
+    baseURL: 'http://localhost:4000',
+  });
+
 
   const ingresar = async () => {
     try {
-      const response = await axios.post('/api/usuarios/login', { user: usuario, pass: password })
+      const response = await api.post('/api/usuarios/login', { user: usuario, pass: password })
       const { body } = response.data
 
       axios.defaults.headers.common['Authorization'] = 'Bearer ' + body.token
@@ -28,7 +32,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
       localStorage.setItem('user_name', body.usuario[0].op_nombre)
       localStorage.setItem('user_suc', body.usuario[0].op_sucursal)
 
-      const rolesResponse = await axios.get('/api/menu/rol?user=' + localStorage.getItem('user_id'))
+      const rolesResponse = await api.get('/api/menu/rol?user=' + localStorage.getItem('user_id'))
       const roles = rolesResponse.data.body
       let user = localStorage.getItem('user_name')
       if (user) {

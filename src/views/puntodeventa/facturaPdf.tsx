@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { usePDF } from "react-to-pdf";
-import { fetchData } from "@/services/api";
 import { Button } from "@chakra-ui/react";
 
 interface Cliente {
