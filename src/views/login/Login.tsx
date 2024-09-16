@@ -1,77 +1,109 @@
-import React, { useState } from 'react';
-import { supabase } from '../../utils/supabase'; // Importar cliente de Supabase
-import { Box, Button, Center, Heading, Input, Text } from '@chakra-ui/react';
+import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import Swal from 'sweetalert2'
+import { UserIcon, LockKeyhole } from 'lucide-react'
+import { Button, Input } from "@chakra-ui/react"
 
-const Login: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [error, setError] = useState<string>('');
+interface LoginFormProps {
+  onLoginSuccess: () => void;
+}
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
+  const [usuario, setUsuario] = useState('')
+  const [password, setPassword] = useState('')
+  const navigate = useNavigate()
+  const inputPassRef = useRef<HTMLInputElement>(null)
+  const btnIngresarRef = useRef<HTMLButtonElement>(null)
 
-    // Intentar iniciar sesión
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
 
-    if (error) {
-      setError('Error al iniciar sesión: ' + error.message);
+  const ingresar = async () => {
+    try {
+      const response = await axios.post('/api/usuarios/login', { user: usuario, pass: password })
+      const { body } = response.data
+
+      axios.defaults.headers.common['Authorization'] = 'Bearer ' + body.token
+      localStorage.setItem('token', 'Bearer ' + body.token)
+      localStorage.setItem('user_id', body.usuario[0].op_codigo)
+      localStorage.setItem('user_name', body.usuario[0].op_nombre)
+      localStorage.setItem('user_suc', body.usuario[0].op_sucursal)
+
+      const rolesResponse = await axios.get('/api/menu/rol?user=' + localStorage.getItem('user_id'))
+      const roles = rolesResponse.data.body
+      let user = localStorage.getItem('user_name')
+      if (user) {
+        user = user.toUpperCase().trim()
+        if (user === "SOFMAR") {
+          localStorage.setItem('es_admin', 'true')
+        } else {
+          const isAdmin = roles.some((role: { or_rol: number }) => role.or_rol === 7)
+          if (isAdmin) {
+            localStorage.setItem('es_admin', 'true')
+          }
+        }
+      }
+
+      onLoginSuccess()
+      navigate('/punto-de-venta')
+    } catch (error) {
+      console.error(error)
+      Swal.fire(
+        'Credenciales Incorrectas',
+        'Verifique los datos e intente nuevamente',
+        'error'
+      )
     }
-  };
+  }
+
+  const cancelar = () => {
+    setUsuario('')
+    setPassword('')
+  }
 
   return (
-    <Center className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-12">
-        <Heading as="h2" size="lg" mb={4} textAlign="center" className='text-3xl font-bold tracking-tight text-foreground'>
-          Iniciar Sesión
-        </Heading>
-        <Text className='my-2 mb-4 text-gray-500'>Ingresa tu correo y Contraseña en el formulario</Text>
-      <Box
-        className="shadow-lg px-4 py-12 bg-white rounded-lg md:w-1/3 sm:w-full border"
-        borderRadius="lg"
-        boxShadow="md"
-      >
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
+    <div className="bg-sky-100 flex justify-center items-center min-h-screen">
+      <div className="bg-white p-8 rounded-2xl text-gray-600 shadow-md w-96">
+        <div className="flex justify-center">
+        </div>
+        <h1 className="text-center text-3xl font-bold mt-4">Iniciar Sesión</h1>
+        <div className="mt-6 space-y-4">
+          <div className="flex">
+            <div className="bg-sky-500 p-2 rounded-l-md">
+              <UserIcon className="h-5 w-5 text-white" />
+            </div>
             <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="mb-4 w-full border rounded-lg p-0.5"
+              className="flex-grow rounded-l-none"
+              type="text"
+              placeholder="Usuario"
+              value={usuario}
+              onChange={(e) => setUsuario(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && inputPassRef.current?.focus()}
             />
           </div>
-          <div>
+          <div className="flex">
+            <div className="bg-sky-500 p-2 rounded-l-md">
+              <LockKeyhole className="h-5 w-5 text-white" />
+            </div>
             <Input
+              className="flex-grow rounded-l-none"
               type="password"
               placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
-              className="mb-4 w-full border rounded-lg p-0.5"
+              ref={inputPassRef}
+              onKeyDown={(e) => e.key === 'Enter' && btnIngresarRef.current?.click()}
             />
           </div>
-          {error && (
-            <Text color="red.500" textAlign="center" mb={2}>
-              {error}
-            </Text>
-          )}
-          <Button
-            type="submit"
-            colorScheme="blue"
-            width="100%"
-            className="mt-2 w-full bg-blue-500 p-1 rounded-lg text-white font-bold"
-
-          >
-            Iniciar sesión
+        </div>
+        <div className="grid grid-cols-2 gap-4 mt-6">
+          <Button onClick={ingresar} ref={btnIngresarRef}>
+            Ingresar
           </Button>
-        </form>
-      </Box>
-    </Center>
-  );
-};
-
-export default Login;
+          <Button variant="destructive" onClick={cancelar}>
+            Cancelar
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

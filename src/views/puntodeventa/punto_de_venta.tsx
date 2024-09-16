@@ -28,12 +28,11 @@ import {
   ModalBody,
   ModalCloseButton,
 } from '@chakra-ui/react'
-import {supabase} from '@/utils/supabase'
 import Invoice from './facturaPdf'
 
 interface Sucursal {
   id: number
-  nombre: string
+  descripcion: string
 }
 
 interface Deposito {
@@ -43,30 +42,70 @@ interface Deposito {
 
 interface Vendedor {
   id: number
-  nombre: string
-  codigo: string
+  op_nombre: string
+  op_codigo: string
 }
 
 interface Cliente {
-  id: number
-  nombre: string
-  ruc: string
-  linea_credito: number
+  cli_codigo: number
+  cli_razon: string
+  cli_ruc: string
+  cli_limitecredito: number
 }
 
 interface Articulo {
-  id: number
-  nombre: string
-  precio: number
-  codigo: string
-  impuesto: string
-  stock: number
+  ar_codigo: number
+  ar_descripcion: string
+  ar_pcg: number
+  ar_codbarra: string
+  ar_iva: string
+  ar_stkmin: number
 }
 
 
 const tasasDeCambio: { [key: string]: number } = {
   USD: 0.00013,
   PYG: 1,
+}
+
+const API_BASE_URL = 'https://localhost:4000/api'
+
+const fetchData = async (endpoint: string, token: string) => {
+  try {
+    
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,  
+        'Content-Type': 'application/json'
+      },
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return await response.json()
+  } catch (error) {
+    console.error(`Error fetching ${endpoint}:`, error)
+    throw error
+  }
+}
+const postData = async (endpoint: string, data: any) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return await response.json()
+  } catch (error) {
+    console.error(`Error posting to ${endpoint}:`, error)
+    throw error
+  }
 }
 
 
@@ -180,15 +219,15 @@ export default function PuntoDeVenta() {
 
   const agregarItem = () => {
     if (selectedItem) {
-      const precioEnMonedaActual = selectedItem.precio * tasasDeCambio[moneda];
-      const impuestos = calcularImpuesto(selectedItem.precio, selectedItem.impuesto)
+      const precioEnMonedaActual = selectedItem.ar_pcg * tasasDeCambio[moneda];
+      const impuestos = calcularImpuesto(selectedItem.ar_pcg, selectedItem.ar_iva)
       const nuevoItem = {
-        id: selectedItem.id,
-        nombre: selectedItem.nombre,
-        precioOriginal: selectedItem.precio,
+        id: selectedItem.ar_codigo,
+        nombre: selectedItem.ar_descripcion,
+        precioOriginal: selectedItem.ar_pcg,
         precioUnitario: precioEnMonedaActual,
         cantidad: cantidad,
-        impuesto: selectedItem.impuesto,
+        impuesto: selectedItem.ar_iva,
         impuesto5: impuestos.impuesto5,
         impuesto10: impuestos.impuesto10,
         exentas: impuestos.exentas,
@@ -226,8 +265,8 @@ export default function PuntoDeVenta() {
 
     if (busqueda.length > 0) {
       const filteredRecomendaciones = articulos.filter((articulo) => 
-        articulo.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-        articulo.codigo.toLowerCase().includes(busqueda.toLowerCase())
+        articulo.ar_descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
+        articulo.ar_codbarra.toLowerCase().includes(busqueda.toLowerCase())
       ).slice(0, 5)
       setRecomendaciones(filteredRecomendaciones)
     } else {
@@ -240,8 +279,8 @@ export default function PuntoDeVenta() {
     setClienteBusqueda(busquedaCliente)
     if (busquedaCliente.length > 0) {
       const filteredRecomendacionesClientes = clientes.filter((cliente) => 
-        cliente.nombre.toLowerCase().includes(busquedaCliente.toLowerCase()) ||
-        cliente.ruc.includes(busquedaCliente)
+        cliente.cli_razon.toLowerCase().includes(busquedaCliente.toLowerCase()) ||
+        cliente.cli_ruc.includes(busquedaCliente)
       ).slice(0, 5)
       setRecomendacionesClientes(filteredRecomendacionesClientes)
     } else {
@@ -254,12 +293,12 @@ export default function PuntoDeVenta() {
     setBuscarVendedor(busquedaVendedor)
     if(busquedaVendedor.length > 0){
       const filteredVendedores = vendedores.filter((vendedor) => 
-        vendedor.nombre.toLowerCase().includes(busquedaVendedor.toLowerCase()) ||
-        vendedor.codigo.includes(busquedaVendedor)
+        vendedor.op_nombre.toLowerCase().includes(busquedaVendedor.toLowerCase()) ||
+        vendedor.op_codigo.includes(busquedaVendedor)
       ).slice(0, 5)
       setRecomendacionesVendedores(filteredVendedores)
       if (filteredVendedores.length > 0) {
-        setVendedor(filteredVendedores[0].nombre)
+        setVendedor(filteredVendedores[0].op_nombre)
       }
   }else{
     setRecomendacionesVendedores([])
@@ -281,57 +320,44 @@ export default function PuntoDeVenta() {
 
 
   useEffect(() => {
-    const fetchSucursales = async () => {
-      const { data: sucursales, error } = await supabase
-        .from('sucursales')
-        .select('*')
-      if (error) throw error
-      setSucursales(sucursales)
-      if (sucursales.length > 0) {
-        setSucursal(sucursales[0].id.toString())
+    const fetchAllData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Token no disponible. El usuario no está autenticado.');
+        }
+        const [sucursalesData, depositosData, vendedoresData, clientesData, articulosData] = await Promise.all([
+          fetchData('sucursales', token),
+          fetchData('depositos', token),
+          fetchData('vendedores/vendedor', token),
+          fetchData('clientes', token),
+          fetchData('articulos', token),
+        ]);
+
+        setSucursales(sucursalesData);
+        setDepositos(depositosData);
+        setVendedores(vendedoresData);
+        setClientes(clientesData);
+        setArticulos(articulosData);
+
+        if (sucursalesData.length > 0) {
+          setSucursal(sucursalesData[0].id.toString());
+        }
+        if (depositosData.length > 0) {
+          setDeposito(depositosData[0].id.toString());
+        }
+      } catch (error) {
+        toast({
+          title: "Error al cargar datos",
+          description: "No se pudieron cargar algunos datos. Por favor, intente de nuevo.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
       }
-    }
+    };
 
-    const fetchDepositos = async () => {
-      const { data: depositos, error } = await supabase
-        .from('depositos')
-        .select('*')
-      if (error) throw error
-      setDepositos(depositos)
-      if (depositos.length > 0) {
-        setDeposito(depositos[0].id.toString())
-      }
-    }
-
-    const fetchVendedores = async () => {
-      const { data: vendedores, error } = await supabase
-        .from('vendedores')
-        .select('*')
-      if (error) throw error
-      setVendedores(vendedores)
-    }
-
-    const fetchClientes = async () => {
-      const { data: clientes, error } = await supabase
-        .from('clientes')
-        .select('*')
-      if (error) throw error
-      setClientes(clientes)
-    }
-
-    const fetchArticulos = async () => {
-      const { data: articulos, error } = await supabase
-        .from('articulos')
-        .select('*')
-      if (error) throw error
-      setArticulos(articulos)
-    }
-
-    fetchSucursales()
-    fetchDepositos()
-    fetchVendedores()
-    fetchClientes()
-    fetchArticulos()
+    fetchAllData();
   }, [])
 
 
@@ -351,112 +377,72 @@ export default function PuntoDeVenta() {
     }
   }, [moneda]);
 
-      const finalizarVenta = async () => {
-        try {
-          // Verificar que todos los campos necesarios estén presentes
-          if (!sucursal || !deposito || !vendedor || !clienteSeleccionado) {
-            throw new Error('Faltan campos requeridos');
-          }
-      
-          const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
-          const descuento = descuentoTipo === 'porcentaje'
-            ? subtotal * (descuentoValor / 100)
-            : descuentoValor;
-          const total = subtotal - descuento;
-      
-          console.log('Datos de la venta:', { sucursal, deposito, vendedor, clienteSeleccionado, total, descuento, condicionVenta, notaFiscal });
-      
-          const { data: ventaData, error: ventaError } = await supabase
-            .from('ventas')
-            .insert({
-              sucursal_id: parseInt(sucursal),
-              deposito_id: parseInt(deposito),
-              vendedor_id: parseInt(vendedor),
-              cliente_id: clienteSeleccionado.id,
-              total,
-              descuento,
-              condicion_venta: condicionVenta,
-              nota_fiscal: notaFiscal
-            })
-            .select();
-      
-          if (ventaError) {
-            console.error('Error al insertar la venta:', ventaError);
-            throw ventaError;
-          }
-      
-      
-          const ventaId = ventaData[0].id;
-          setNewSaleID(ventaId)
-      
-          for (const item of items) {
-            console.log('Insertando item:', item);
-            const { error: itemError } = await supabase
-              .from('items_venta')
-              .insert({
-                venta_id: ventaId,
-                articulo_id: item.id,
-                cantidad: item.cantidad,
-                precio_unitario: item.precioUnitario,
-                subtotal: item.subtotal,
-                impuesto5: item.impuesto5*item.cantidad,
-                impuesto10: item.impuesto10*item.cantidad,
-                exentas: item.exentas*item.cantidad,
-              });
-      
-            if (itemError) {
-              console.error('Error al insertar item:', itemError);
-              throw itemError;
-            }
-            const { error: stockError } = await supabase
-              .rpc('subtract_stock', { item_id: item.id, quantity: item.cantidad });
-      
-            if (stockError) {
-              console.error('Error al actualizar stock:', stockError);
-              throw stockError;
-            }
-          }
-      
-          if (condicionVenta === 1 && clienteSeleccionado) {
-            const nuevoCredito = (clienteSeleccionado.linea_credito||0) - total;
-            const { error: creditoError } = await supabase
-              .from('clientes')
-              .update({ linea_credito: nuevoCredito })
-              .eq('id', clienteSeleccionado.id);
-      
-            if (creditoError) {
-              throw creditoError;
-            }
-          }
-      
-          // Limpiar el estado y mostrar mensaje de éxito
-          setItems([]);
-          setVendedor('');
-          setClienteSeleccionado(null);
-          setDescuentoValor(0);
-          setCondicionVenta(0);
-          setNotaFiscal(0);
-      
-          toast({
-            title: "Venta finalizada",
-            description: "La venta se ha guardado correctamente",
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-          });
 
-          setShowInvoice(true);
-        } catch (error) {
-          console.error('Error detallado al finalizar la venta:', error);
-          toast({
-            title: "Error",
-            description: error instanceof Error ? error.message : "Ha ocurrido un error al finalizar la venta",
-            status: "error",
-            duration: 3000,
-            isClosable: true,
-          });
-        }
+  
+
+  const finalizarVenta = async () => {
+    try {
+      if (!sucursal || !deposito || !vendedor || !clienteSeleccionado) {
+        throw new Error('Faltan campos requeridos');
+      }
+
+      const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
+      const descuento = descuentoTipo === 'porcentaje'
+        ? subtotal * (descuentoValor / 100)
+        : descuentoValor;
+      const total = subtotal - descuento;
+
+      const ventaData = {
+        sucursal_id: parseInt(sucursal),
+        deposito_id: parseInt(deposito),
+        vendedor_id: parseInt(vendedor),
+        cliente_id: clienteSeleccionado.cli_codigo,
+        total,
+        descuento,
+        condicion_venta: condicionVenta,
+        nota_fiscal: notaFiscal,
+        items: items.map(item => ({
+          articulo_id: item.id,
+          cantidad: item.cantidad,
+          precio_unitario: item.precioUnitario,
+          subtotal: item.subtotal,
+          impuesto5: item.impuesto5*item.cantidad,
+          impuesto10: item.impuesto10*item.cantidad,
+          exentas: item.exentas*item.cantidad,
+        }))
       };
+
+      const result = await postData('ventas', ventaData);
+      setNewSaleID(result.id);
+
+      // Limpiar el estado y mostrar mensaje de éxito
+      setItems([]);
+      setVendedor('');
+      setClienteSeleccionado(null);
+      setDescuentoValor(0);
+      setCondicionVenta(0);
+      setNotaFiscal(0);
+
+      toast({
+        title: "Venta finalizada",
+        description: "La venta se ha guardado correctamente",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+
+      setShowInvoice(true);
+    } catch (error) {
+      console.error('Error detallado al finalizar la venta:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Ha ocurrido un error al finalizar la venta",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
 
       const getCreditColor= (credit:number)=>{
@@ -488,7 +474,7 @@ export default function PuntoDeVenta() {
                     <FormLabel>Sucursal</FormLabel>
                     <Select placeholder="Seleccionar sucursal" value={sucursal} onChange={(e) => setSucursal(e.target.value)}>
                       {sucursales.map((sucursal) => (
-                        <option key={sucursal.id} value={sucursal.id.toString()}>{sucursal.nombre}</option>
+                        <option key={sucursal.id} value={sucursal.id.toString()}>{sucursal.descripcion}</option>
                       ))}
                     </Select>
                   </Box>
@@ -544,13 +530,13 @@ export default function PuntoDeVenta() {
                             _hover={{ bg: 'gray.100' }}
                             cursor="pointer"
                             onClick={() => {
-                              setBuscarVendedor(vendedor.codigo)
+                              setBuscarVendedor(vendedor.op_codigo)
                               setVendedor(vendedor.id.toString())
                               setRecomendacionesVendedores([])
                             }}
                           >
-                            <Text fontWeight="bold">{vendedor.nombre}</Text>
-                            <Text as="span" color="gray.500" fontSize="sm">Código: {vendedor.codigo}</Text>
+                            <Text fontWeight="bold">{vendedor.op_nombre}</Text>
+                            <Text as="span" color="gray.500" fontSize="sm">Código: {vendedor.op_codigo}</Text>
                           </Box>
                         ))}
                       </Box>
@@ -583,23 +569,23 @@ export default function PuntoDeVenta() {
                         overflowY="auto"
                       >
                         {recomendacionesClientes.map((cliente) => {
-                    const credit = Number(cliente.linea_credito) || 0;
+                    const credit = Number(cliente.cli_limitecredito) || 0;
                     const creditColor = getCreditColor(credit);
 
                     return (
                       <Box
-                        key={cliente.id}
+                        key={cliente.cli_codigo}
                         p={2}
                         _hover={{ bg: 'gray.100' }}
                         cursor="pointer"
                         onClick={() => {
-                          setClienteBusqueda(cliente.nombre);
+                          setClienteBusqueda(cliente.cli_razon);
                           setClienteSeleccionado(cliente);
                           setRecomendacionesClientes([]);
                         }}
                       >
-                        <Text fontWeight="bold">{cliente.nombre}</Text>
-                        <Text as="span" color="gray.500" fontSize="sm">RUC: {cliente.ruc}</Text>
+                        <Text fontWeight="bold">{cliente.cli_razon}</Text>
+                        <Text as="span" color="gray.500" fontSize="sm">RUC: {cliente.cli_ruc}</Text>
                         <Text as="span" color={creditColor} fontSize="sm" ml={2}>Línea de crédito: {formatCurrency(credit)}</Text>
                       </Box>
                     );
@@ -629,20 +615,20 @@ export default function PuntoDeVenta() {
                       >
                         {recomendaciones.map((articulo) => (
                           <Box
-                            key={articulo.id}
+                            key={articulo.ar_codigo}
                             p={2}
                             _hover={{bg: 'gray.100'}}
                             onClick={() => {
-                              setArticuloBusqueda(articulo.nombre)
+                              setArticuloBusqueda(articulo.ar_descripcion)
                               setSelectedItem(articulo)
                               setRecomendaciones([])
                             }}
                           >
                             <Flex >
-                            {articulo.nombre}
-                              <Text as="span" color="gray.500" fontSize={'12px'}>//Codigo: {articulo.codigo}</Text>
-                              <Text as="span" color="gray.500" fontSize={'12px'}>//Precio: {articulo.precio}</Text>
-                              <Text as="span" color="gray.500" fontSize={'12px'}>//Stock: {articulo.stock}</Text>
+                            {articulo.ar_descripcion}
+                              <Text as="span" color="gray.500" fontSize={'12px'}>//Codigo: {articulo.ar_codigo}</Text>
+                              <Text as="span" color="gray.500" fontSize={'12px'}>//Precio: {articulo.ar_pcg}</Text>
+                              <Text as="span" color="gray.500" fontSize={'12px'}>//Stock: {articulo.ar_stkmin}</Text>
                             </Flex>
                           </Box>
                         ))}
@@ -727,7 +713,7 @@ export default function PuntoDeVenta() {
                         }}
                         onClick={() => setCondicionVenta(1)}
                         width={isMobile ? "full" : "auto"}
-                        isDisabled={!clienteSeleccionado || clienteSeleccionado.linea_credito <= 0}
+                        isDisabled={!clienteSeleccionado || clienteSeleccionado.cli_limitecredito <= 0}
                       >
                         Crédito
                       </Button>

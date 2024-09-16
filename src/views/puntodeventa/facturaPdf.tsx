@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/utils/supabase";
 import { usePDF } from "react-to-pdf";
-
+import { fetchData } from "@/services/api";
 import { Button } from "@chakra-ui/react";
 
 interface Cliente {
@@ -70,80 +69,31 @@ export default function Invoice({ ventaId }: InvoiceProps) {
       setIsLoading(true);
       setError(null);
       try {
-        // Fetch venta
-        const { data: ventaData, error: ventaError } = await supabase
-          .from('ventas')
-          .select('*')
-          .eq('id', ventaId)
-          .single();
-        
-        if (ventaError) throw new Error(`Error fetching venta: ${ventaError.message}`);
+        const ventaData = await fetchData(`ventas/${ventaId}`);
         setVenta(ventaData);
 
-        // Fetch cliente
         if (ventaData.cliente_id) {
-          const { data: clienteData, error: clienteError } = await supabase
-            .from('clientes')
-            .select('*')
-            .eq('id', ventaData.cliente_id)
-            .single();
-          
-          if (clienteError) throw new Error(`Error fetching cliente: ${clienteError.message}`);
+          const clienteData = await fetchData(`clientes/${ventaData.cliente_id}`);
           setCliente(clienteData);
         }
 
-        // Fetch sucursal
         if (ventaData.sucursal_id) {
-          const { data: sucursalData, error: sucursalError } = await supabase
-            .from('sucursales')
-            .select('*')
-            .eq('id', ventaData.sucursal_id)
-            .single();
-          
-          if (sucursalError) throw new Error(`Error fetching sucursal: ${sucursalError.message}`);
+          const sucursalData = await fetchData(`sucursales/${ventaData.sucursal_id}`);
           setSucursal(sucursalData);
         }
 
-        // Fetch deposito
         if (ventaData.deposito_id) {
-          const { data: depositoData, error: depositoError } = await supabase
-            .from('depositos')
-            .select('*')
-            .eq('id', ventaData.deposito_id)
-            .single();
-          
-          if (depositoError) throw new Error(`Error fetching deposito: ${depositoError.message}`);
+          const depositoData = await fetchData(`depositos/${ventaData.deposito_id}`);
           setDeposito(depositoData);
         }
 
-        // Fetch vendedor
         if (ventaData.vendedor_id) {
-          const { data: vendedorData, error: vendedorError } = await supabase
-            .from('vendedores')
-            .select('*')
-            .eq('id', ventaData.vendedor_id)
-            .single();
-          
-          if (vendedorError) throw new Error(`Error fetching vendedor: ${vendedorError.message}`);
+          const vendedorData = await fetchData(`vendedores/${ventaData.vendedor_id}`);
           setVendedor(vendedorData);
         }
 
-        // Fetch items vendidos with articulo details
-        const { data: itemsData, error: itemsError } = await supabase
-          .from('items_venta')
-          .select(`
-            *,
-            articulos (
-              nombre
-            )
-          `)
-          .eq('venta_id', ventaId);
-        
-        if (itemsError) throw new Error(`Error fetching items vendidos: ${itemsError.message}`);
-        setItemsVendidos(itemsData.map(item => ({
-          ...item,
-          nombre_articulo: item.articulos?.nombre || 'Nombre no disponible'
-        })));
+        const itemsData = await fetchData(`items_venta?venta_id=${ventaId}`);
+        setItemsVendidos(itemsData);
 
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
