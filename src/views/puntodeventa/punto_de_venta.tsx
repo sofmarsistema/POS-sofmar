@@ -20,15 +20,10 @@ import {
   useMediaQuery,
   Divider,
   ChakraProvider,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
 } from '@chakra-ui/react'
-import Invoice from './facturaPdf'
+import axios from 'axios'
+import { useAuth } from '@/services/AuthContext' 
+
 
 interface Sucursal {
   id: number
@@ -37,7 +32,7 @@ interface Sucursal {
 
 interface Deposito {
   id: number
-  nombre: string
+  dep_descripcion: string
 }
 
 interface Vendedor {
@@ -48,18 +43,20 @@ interface Vendedor {
 
 interface Cliente {
   cli_codigo: number
+  cli_interno:number
   cli_razon: string
   cli_ruc: string
   cli_limitecredito: number
 }
 
 interface Articulo {
-  ar_codigo: number
+  al_codigo: number
   ar_descripcion: string
   ar_pcg: number
   ar_codbarra: string
-  ar_iva: string
-  ar_stkmin: number
+  ar_iva: number
+  ar_cantidad: number
+  al_vencimiento: string
 }
 
 
@@ -68,64 +65,23 @@ const tasasDeCambio: { [key: string]: number } = {
   PYG: 1,
 }
 
-const API_BASE_URL = 'https://db.sofmar.com.py:4008'
-
-const fetchData = async (endpoint: string, token: string) => {
-  try {
-    
-    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,  
-        'Content-Type': 'application/json'
-      },
-    })
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    return await response.json()
-  } catch (error) {
-    console.error(`Error fetching ${endpoint}:`, error)
-    throw error
-  }
-}
-const postData = async (endpoint: string, data: any) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    })
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    return await response.json()
-  } catch (error) {
-    console.error(`Error posting to ${endpoint}:`, error)
-    throw error
-  }
-}
-
-
-
 export default function PuntoDeVenta() {
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
   const [depositos, setDepositos] = useState<Deposito[]>([])
   const [vendedores, setVendedores] = useState<Vendedor[]>([])
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [articulos, setArticulos] = useState<Articulo[]>([])
-  const [sucursal, setSucursal] = useState('Central')
-  const [deposito, setDeposito] = useState('Principal')
+  const [sucursal, setSucursal] = useState('')
+  const [deposito, setDeposito] = useState('')
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [moneda, setMoneda] = useState('PYG')
   const [vendedor, setVendedor] = useState('')
+  const [operador,setOperador ]= useState<string>('')
   const [clienteSeleccionado, setClienteSeleccionado] = useState<typeof clientes[0] | null>(null)
   const [articuloBusqueda, setArticuloBusqueda] = useState('')
   const [clienteBusqueda, setClienteBusqueda] = useState('')
   const [cantidad, setCantidad] = useState(1)
-  const [items, setItems] = useState<{ id: number, nombre: string, precioUnitario: number, cantidad: number, subtotal: number, impuesto:string, impuesto5:number, impuesto10:number,exentas:number, precioOriginal: number}[]>([])
+  const [items, setItems] = useState<{ id: number, nombre: string, precioUnitario: number, cantidad: number, subtotal: number, impuesto:number, impuesto5:number, impuesto10:number,exentas:number, precioOriginal: number}[]>([])
   const [selectedItem, setSelectedItem] = useState<typeof articulos[0] | null>(null)
   const [condicionVenta, setCondicionVenta] = useState(0)
   const [notaFiscal, setNotaFiscal] = useState(0)
@@ -136,9 +92,164 @@ export default function PuntoDeVenta() {
   const [descuentoValor, setDescuentoValor] = useState(0)
   const [buscarVendedor, setBuscarVendedor] = useState('')
   const [recomedacionesVendedores, setRecomendacionesVendedores] = useState<typeof vendedores>([])
-  const [showInvoice, setShowInvoice]= useState(false)
   const [ newSaleId, setNewSaleID]= useState<number | null>(null)
+  const [error, setError] =useState<string | null>(null)
+  const [numeroFactura, setNumeroFactura] = useState('')
   const toast = useToast()
+  const {auth} = useAuth()
+
+
+  // Funciones y Effects para traer los datos//
+
+  useEffect(() => {
+
+    // Traer articulos
+    const fetchArticulos = async () => {
+      if (!auth) {
+        setError("No estás autentificado");
+        return;
+      }
+      try {
+        const response = await axios.get("https://localhost:4000/api/articulos/");
+        setArticulos(response.data.body);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Error desconocido");
+        }
+        toast({
+          title: "Error",
+          description: "Hubo un problema al traer los artículos.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    };
+
+    // traerSucursales
+
+    const fetchSucursales = async () => {
+      if (!auth) {
+        setError("No estás autentificado");
+        return;
+      }
+      try {
+        const response = await axios.get("https://localhost:4000/api/sucursales/listar");
+        setSucursales(response.data.body);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Error desconocido");
+        }
+        toast({
+          title: "Error",
+          description: "Hubo un problema al traer los artículos.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    };
+
+    // traer depositos
+
+    const fetchDepositos = async () => {
+      if (!auth) {
+        setError("No estás autentificado");
+        return;
+      }
+      try {
+        const response = await axios.get(`https://localhost:4000/api/depositos/sucursal/${localStorage.getItem('user_id')}`);
+        setDepositos(response.data.body);
+        if (depositos.length < 1) {
+          setDepositos([{ id: 1, dep_descripcion: 'Casa Central' }]);
+        } else {
+          setDepositos(depositos);
+        }
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Error desconocido");
+        }
+        toast({
+          title: "Error",
+          description: "Hubo un problema al traer los artículos.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    };
+
+
+    // traerclientes
+
+    const fetchClientes = async () => {
+      if (!auth) {
+        setError("No estás autentificado");
+        return;
+      }
+      try {
+        const response = await axios.get(`https://localhost:4000/api/clientes`);
+        setClientes(response.data.body);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Error desconocido");
+        }
+        toast({
+          title: "Error",
+          description: "Hubo un problema al traer los artículos.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    };
+
+    const fetchVendedores = async () => {
+      if (!auth) {
+        setError("No estás autentificado");
+        return;
+      }
+      try {
+        const response = await axios.get(`https://localhost:4000/api/usuarios`);
+        setVendedores(response.data.body);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Error desconocido");
+        }
+        toast({
+          title: "Error",
+          description: "Hubo un problema al traer los artículos.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    };
+
+
+    
+
+    fetchArticulos();
+    fetchSucursales();
+    fetchDepositos();
+    fetchClientes();
+    fetchVendedores();
+
+
+  }, [auth, toast]);
+
+
+
 
   const formatCurrency = (amount: number) => {
     const currencySymbol : {[key: string] :string} = {
@@ -154,13 +265,13 @@ export default function PuntoDeVenta() {
     }).format(amount).replace(/\s/g, '').replace(moneda, currencySymbol[moneda]);
   }
 
-    const calcularImpuesto = (precio: number, impuesto: string) => {
+    const calcularImpuesto = (precio: number, impuesto: number) => {
       switch(impuesto){
-        case '5%':
+        case 2:
           return {impuesto5: precio * 1, impuesto10: 0, exentas: 0};
-        case '10%':
+        case 3:
           return {impuesto5: 0, impuesto10: precio * 1, exentas: 0};
-        case 'exentas':
+        case 1:
           return {impuesto5: 0, impuesto10: 0, exentas: precio};
         default:
           return {impuesto5: 0, impuesto10: 0, exentas: 0};
@@ -222,7 +333,7 @@ export default function PuntoDeVenta() {
       const precioEnMonedaActual = selectedItem.ar_pcg * tasasDeCambio[moneda];
       const impuestos = calcularImpuesto(selectedItem.ar_pcg, selectedItem.ar_iva)
       const nuevoItem = {
-        id: selectedItem.ar_codigo,
+        id: selectedItem.al_codigo,
         nombre: selectedItem.ar_descripcion,
         precioOriginal: selectedItem.ar_pcg,
         precioUnitario: precioEnMonedaActual,
@@ -247,9 +358,9 @@ export default function PuntoDeVenta() {
     }
   }
   
+  const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
 
   const calcularTotal = () => {
-    const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
     let total = subtotal;
     if(descuentoTipo === 'porcentaje'){
       total -= (subtotal * descuentoValor) / 100;
@@ -280,7 +391,8 @@ export default function PuntoDeVenta() {
     if (busquedaCliente.length > 0) {
       const filteredRecomendacionesClientes = clientes.filter((cliente) => 
         cliente.cli_razon.toLowerCase().includes(busquedaCliente.toLowerCase()) ||
-        cliente.cli_ruc.includes(busquedaCliente)
+        cliente.cli_ruc.includes(busquedaCliente) ||
+        cliente.cli_interno.toString().includes(busquedaCliente)
       ).slice(0, 5)
       setRecomendacionesClientes(filteredRecomendacionesClientes)
     } else {
@@ -294,11 +406,12 @@ export default function PuntoDeVenta() {
     if(busquedaVendedor.length > 0){
       const filteredVendedores = vendedores.filter((vendedor) => 
         vendedor.op_nombre.toLowerCase().includes(busquedaVendedor.toLowerCase()) ||
-        vendedor.op_codigo.includes(busquedaVendedor)
+        vendedor.op_codigo.toString().includes(busquedaVendedor)
       ).slice(0, 5)
       setRecomendacionesVendedores(filteredVendedores)
       if (filteredVendedores.length > 0) {
         setVendedor(filteredVendedores[0].op_nombre)
+        setOperador(filteredVendedores[0].op_codigo)
       }
   }else{
     setRecomendacionesVendedores([])
@@ -320,48 +433,6 @@ export default function PuntoDeVenta() {
 
 
   useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('Token no disponible. El usuario no está autenticado.');
-        }
-        const [sucursalesData, depositosData, vendedoresData, clientesData, articulosData] = await Promise.all([
-          fetchData('sucursales', token),
-          fetchData('depositos', token),
-          fetchData('vendedores/vendedor', token),
-          fetchData('clientes', token),
-          fetchData('articulos', token),
-        ]);
-
-        setSucursales(sucursalesData);
-        setDepositos(depositosData);
-        setVendedores(vendedoresData);
-        setClientes(clientesData);
-        setArticulos(articulosData);
-
-        if (sucursalesData.length > 0) {
-          setSucursal(sucursalesData[0].id.toString());
-        }
-        if (depositosData.length > 0) {
-          setDeposito(depositosData[0].id.toString());
-        }
-      } catch (error) {
-        toast({
-          title: "Error al cargar datos",
-          description: "No se pudieron cargar algunos datos. Por favor, intente de nuevo.",
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-        });
-      }
-    };
-
-    fetchAllData();
-  }, [])
-
-
-  useEffect(() => {
     setItems(prevItems => prevItems.map(item => {
       const precioEnMonedaActual = item.precioOriginal * tasasDeCambio[moneda];
       const impuestos = calcularImpuesto(item.precioOriginal, item.impuesto);
@@ -377,61 +448,145 @@ export default function PuntoDeVenta() {
     }
   }, [moneda]);
 
-
   
+  const now = new Date()
+  const horaLocal = now.toLocaleTimeString();
+
+  const ventaData = {
+    venta: {
+      ve_cliente: clienteSeleccionado?.cli_codigo,
+      ve_operador: operador ? parseInt(operador) : 1,
+      ve_deposito: parseInt(deposito),
+      ve_moneda: moneda === 'PYG'? 1: 0,
+      ve_fecha: fecha,
+      ve_factura: numeroFactura,
+      ve_credito: condicionVenta,
+      ve_saldo: clienteSeleccionado?.cli_limitecredito,
+      ve_sucursal: parseInt(sucursal),
+      ve_total: calcularTotal(),
+      ve_vencimiento: selectedItem?.al_vencimiento.substring(0,10) ? selectedItem.al_vencimiento : '2001-01-01',
+      ve_descuento: descuentoTipo === 'porcentaje'
+        ? items.reduce((acc, item) => acc + item.subtotal, 0) * (descuentoValor / 100)
+        : descuentoValor,
+      ve_vendedor: operador ? parseInt(operador): 1,
+      ve_hora: horaLocal
+    },
+    detalle_ventas: items.map(item => {
+      const itemSubtotal = item.precioUnitario * item.cantidad;
+      const totalSubtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
+      let itemDescuento = 0;
+  
+      if (descuentoTipo === 'porcentaje') {
+        itemDescuento = itemSubtotal * (descuentoValor / 100);
+      } else {
+        // Distribuir el descuento proporcionalmente
+        itemDescuento = (itemSubtotal / totalSubtotal) * descuentoValor;
+      }
+      const deve_exentas = Math.max(item.exentas * item.cantidad - itemDescuento, 0);
+      const deve_cinco = Math.max(item.impuesto5 * item.cantidad - itemDescuento, 0);
+      const deve_diez = Math.max(item.impuesto10 * item.cantidad - itemDescuento, 0);
+  
+      return {
+        deve_articulo: item.id,
+        deve_cantidad: item.cantidad,
+        deve_precio: item.precioUnitario,
+        deve_descuento: itemDescuento,
+        deve_exentas:deve_exentas,
+        deve_cinco: deve_cinco,
+        deve_diez: deve_diez,
+        deve_vendedor: operador ? parseInt(operador) : 1
+      };
+    })
+  };
+  console.log(ventaData)
 
   const finalizarVenta = async () => {
-    try {
-      if (!sucursal || !deposito || !vendedor || !clienteSeleccionado) {
-        throw new Error('Faltan campos requeridos');
-      }
-
-      const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
-      const descuento = descuentoTipo === 'porcentaje'
-        ? subtotal * (descuentoValor / 100)
-        : descuentoValor;
-      const total = subtotal - descuento;
-
-      const ventaData = {
-        sucursal_id: parseInt(sucursal),
-        deposito_id: parseInt(deposito),
-        vendedor_id: parseInt(vendedor),
-        cliente_id: clienteSeleccionado.cli_codigo,
-        total,
-        descuento,
-        condicion_venta: condicionVenta,
-        nota_fiscal: notaFiscal,
-        items: items.map(item => ({
-          articulo_id: item.id,
-          cantidad: item.cantidad,
-          precio_unitario: item.precioUnitario,
-          subtotal: item.subtotal,
-          impuesto5: item.impuesto5*item.cantidad,
-          impuesto10: item.impuesto10*item.cantidad,
-          exentas: item.exentas*item.cantidad,
-        }))
-      };
-
-      const result = await postData('ventas', ventaData);
-      setNewSaleID(result.id);
-
-      // Limpiar el estado y mostrar mensaje de éxito
-      setItems([]);
-      setVendedor('');
-      setClienteSeleccionado(null);
-      setDescuentoValor(0);
-      setCondicionVenta(0);
-      setNotaFiscal(0);
-
+    if (!clienteSeleccionado) {
       toast({
-        title: "Venta finalizada",
-        description: "La venta se ha guardado correctamente",
-        status: "success",
+        title: "Error",
+        description: "Por favor, seleccione un cliente",
+        status: "error",
         duration: 3000,
         isClosable: true,
       });
-
-      setShowInvoice(true);
+      return;
+    }
+  
+    if (!sucursal) {
+      toast({
+        title: "Error",
+        description: "Por favor, seleccione una sucursal",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+  
+    if (!deposito) {
+      toast({
+        title: "Error",
+        description: "Por favor, seleccione un depósito",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+  
+    if (!vendedor) {
+      toast({
+        title: "Error",
+        description: "Por favor, seleccione un vendedor",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+  
+    if (items.length === 0) {
+      toast({
+        title: "Error",
+        description: "Por favor, agregue al menos un artículo a la venta",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+  
+    try {
+      const response = await axios.post('https://localhost:4000/api/venta/agregarVenta', ventaData,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (response.data && response.data.body) {
+        setNewSaleID(response.data.body);
+  
+        setItems([]);
+        setClienteSeleccionado(null);
+        setClienteBusqueda('')
+        setDescuentoValor(0);
+        setCondicionVenta(0);
+        setNotaFiscal(0);
+        setNumeroFactura('')
+  
+        toast({
+          title: "Venta finalizada",
+          description: "La venta se ha guardado correctamente",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        throw new Error('No se recibió un ID de venta válido');
+      }
     } catch (error) {
       console.error('Error detallado al finalizar la venta:', error);
       toast({
@@ -482,7 +637,7 @@ export default function PuntoDeVenta() {
                     <FormLabel>Depósito</FormLabel>
                     <Select placeholder="Seleccionar depósito" value={deposito} onChange={(e) => setDeposito(e.target.value)}>
                       {depositos.map((deposito) => (
-                        <option key={deposito.id} value={deposito.id.toString()}>{deposito.nombre}</option>
+                        <option key={deposito.id} value={deposito.id}>{deposito.dep_descripcion}</option>
                       ))}
                     </Select>
                   </Box>
@@ -525,13 +680,14 @@ export default function PuntoDeVenta() {
                       >
                         {recomedacionesVendedores.map((vendedor) => (
                           <Box
-                            key={vendedor.id}
+                            key={vendedor.op_codigo}
                             p={2}
                             _hover={{ bg: 'gray.100' }}
                             cursor="pointer"
                             onClick={() => {
                               setBuscarVendedor(vendedor.op_codigo)
-                              setVendedor(vendedor.id.toString())
+                              setVendedor(vendedor.op_nombre.toString())
+                              setOperador(vendedor.op_codigo)
                               setRecomendacionesVendedores([])
                             }}
                           >
@@ -615,7 +771,7 @@ export default function PuntoDeVenta() {
                       >
                         {recomendaciones.map((articulo) => (
                           <Box
-                            key={articulo.ar_codigo}
+                            key={articulo.al_codigo}
                             p={2}
                             _hover={{bg: 'gray.100'}}
                             onClick={() => {
@@ -626,9 +782,9 @@ export default function PuntoDeVenta() {
                           >
                             <Flex >
                             {articulo.ar_descripcion}
-                              <Text as="span" color="gray.500" fontSize={'12px'}>//Codigo: {articulo.ar_codigo}</Text>
+                              <Text as="span" color="gray.500" fontSize={'12px'}>//Codigo: {articulo.al_codigo}</Text>
                               <Text as="span" color="gray.500" fontSize={'12px'}>//Precio: {articulo.ar_pcg}</Text>
-                              <Text as="span" color="gray.500" fontSize={'12px'}>//Stock: {articulo.ar_stkmin}</Text>
+                              <Text as="span" color="gray.500" fontSize={'12px'}>//ve_vencimiento: {articulo.al_vencimiento.substring(0,10)}</Text>
                             </Flex>
                           </Box>
                         ))}
@@ -749,6 +905,15 @@ export default function PuntoDeVenta() {
                         Nota Comun
                       </Button>
                     </Flex>
+                    <Box>
+                    <FormLabel>Número de Factura</FormLabel>
+                    <Input 
+                      type="text" 
+                      placeholder="Ingrese el número de factura" 
+                      value={numeroFactura} 
+                      onChange={(e) => setNumeroFactura(e.target.value)}
+                    />
+                  </Box>
                   </Box>
                 </Flex>
                 <Flex mt={isMobile ? 4 : 0} gap={4} flexDirection={isMobile? 'row': 'column'} alignItems={'center'}>
@@ -786,24 +951,7 @@ export default function PuntoDeVenta() {
                   <Button colorScheme="blue" mt={4} width={isMobile ? "full" : "auto"} onClick={finalizarVenta}>Finalizar Venta</Button>
                 </Box>
               </Flex>
-              
             </Box>
-            <Modal isOpen={showInvoice} onClose={() => setShowInvoice(false)} size="full">
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Factura</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              {newSaleId && <Invoice ventaId={newSaleId} />}
-            </ModalBody>
-            <ModalFooter>
-              <Button colorScheme="blue" mr={3} onClick={() => setShowInvoice(false)}>
-                Cerrar
-              </Button>
-              {/* You can add a print button here if needed */}
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
           </ChakraProvider>
     </div>
   
