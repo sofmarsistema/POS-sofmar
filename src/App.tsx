@@ -1,15 +1,23 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from 'react-router-dom';
-import { ChakraProvider, Box, useMediaQuery } from '@chakra-ui/react';
+import { ChakraProvider, Box, useMediaQuery, Spinner, Center } from '@chakra-ui/react';
 import Login from './views/login/Login';
 import PuntoDeVenta from './views/puntodeventa/punto_de_venta';
 import { AuthProvider, useAuth } from './services/AuthContext';
-import Sidebar from './views/modules/NavBar'; // Asegúrate de que la ruta de importación sea correcta
+import Sidebar from './views/modules/NavBar';
 
 const ProtectedLayout: React.FC = () => {
-  const { auth } = useAuth();
+  const { auth, isLoading } = useAuth();
   const [isLargerThan768] = useMediaQuery('(min-width: 768px)');
   
+  if (isLoading) {
+    return (
+      <Center h="100vh">
+        <Spinner size="xl" />
+      </Center>
+    );
+  }
+
   if (!auth) {
     return <Navigate to="/login" replace />;
   }

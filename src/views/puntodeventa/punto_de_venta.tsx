@@ -75,7 +75,7 @@ export default function PuntoDeVenta() {
   const [articulos, setArticulos] = useState<Articulo[]>([])
   const [sucursal, setSucursal] = useState('')
   const [deposito, setDeposito] = useState('')
-  const [depositoSeleccionado, setDepositoSeleccionado] = useState<Deposito | null>(null);
+  const [, setDepositoSeleccionado] = useState<Deposito | null>(null);
   const [depositoId, setDepositoId] = useState<string>('');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [moneda, setMoneda] = useState('PYG')
@@ -175,13 +175,18 @@ export default function PuntoDeVenta() {
       }
       try {
         const response = await axios.get(`${api_url}depositos/sucursal/${localStorage.getItem('user_id')}`);
-        setDepositos(response.data.body);
         if (response.data.body.length < 1) {
-          setDepositos([{ id: 1, dep_descripcion: 'Casa Central' }]);
+          const defaultDeposito = { id: 1, dep_descripcion: 'Casa Central' };
+          setDepositos([defaultDeposito]);
           setDeposito('1');
+          setDepositoId('1');
+          setDepositoSeleccionado(defaultDeposito);
         } else {
           setDepositos(response.data.body);
-          setDeposito(response.data.body[0].id.toString());
+          const primerDeposito = response.data.body[0];
+          setDeposito(primerDeposito.id.toString());
+          setDepositoId(primerDeposito.id.toString());
+          setDepositoSeleccionado(primerDeposito);
         }
       } catch (err) {
         if (err instanceof Error) {
@@ -191,7 +196,7 @@ export default function PuntoDeVenta() {
         }
         toast({
           title: "Error",
-          description: "Hubo un problema al traer los artículos.",
+          description: "Hubo un problema al traer los depósitos.",
           status: "error",
           duration: 5000,
           isClosable: true,

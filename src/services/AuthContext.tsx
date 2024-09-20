@@ -21,23 +21,30 @@ interface AuthContextType {
   auth: AuthState | null;
   login: (data: LoginData) => void;
   logout: () => void;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [auth, setAuth] = useState<AuthState | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('user_id');
-    const userName = localStorage.getItem('user_name');
-    const userSuc = localStorage.getItem('user_suc');
+    const loadAuthState = () => {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('user_id');
+      const userName = localStorage.getItem('user_name');
+      const userSuc = localStorage.getItem('user_suc');
 
-    if (token && userId && userName && userSuc) {
-      setAuth({ token, userId, userName, userSuc });
-      axios.defaults.headers.common['Authorization'] = token;
-    }
+      if (token && userId && userName && userSuc) {
+        setAuth({ token, userId, userName, userSuc });
+        axios.defaults.headers.common['Authorization'] = token;
+      }
+      setIsLoading(false);
+    };
+
+    loadAuthState();
   }, []);
 
   const login = (data: LoginData) => {
@@ -68,7 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ auth, login, logout }}>
+    <AuthContext.Provider value={{ auth, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
