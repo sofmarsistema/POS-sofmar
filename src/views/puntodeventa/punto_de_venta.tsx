@@ -117,7 +117,7 @@ export default function PuntoDeVenta() {
         const response = await axios.get(`${api_url}articulos/`, {
           params: {
             buscar: articuloBusqueda,
-            id_deposito: depositoId,
+            id_deposito: parseInt(depositoId),
             stock: 1
           }
         });
@@ -390,7 +390,7 @@ export default function PuntoDeVenta() {
         const response = await axios.get(`${api_url}articulos/`, {
           params: {
             buscar: busqueda,
-            id_deposito: depositoId,
+            id_deposito: 1,
             stock: 1
           }
         });
