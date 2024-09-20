@@ -16,6 +16,7 @@ import {
   useToast
 } from '@chakra-ui/react';
 import { LockIcon, AtSignIcon } from '@chakra-ui/icons';
+import { api_url } from '@/utils';
 
 const Login: React.FC = () => {
   const [usuario, setUsuario] = useState('');
@@ -26,7 +27,7 @@ const Login: React.FC = () => {
 
   const ingresar = async () => {
     try {
-      const response = await axios.post('https://localhost:4000/api/usuarios/login', {
+      const response = await axios.post(`${api_url}usuarios/login`, {
         user: usuario,
         pass: password,
       });

@@ -23,6 +23,7 @@ import {
 } from '@chakra-ui/react'
 import axios from 'axios'
 import { useAuth } from '@/services/AuthContext' 
+import { api_url } from '@/utils'
 
 
 interface Sucursal {
@@ -92,8 +93,8 @@ export default function PuntoDeVenta() {
   const [descuentoValor, setDescuentoValor] = useState(0)
   const [buscarVendedor, setBuscarVendedor] = useState('')
   const [recomedacionesVendedores, setRecomendacionesVendedores] = useState<typeof vendedores>([])
-  const [ newSaleId, setNewSaleID]= useState<number | null>(null)
-  const [error, setError] =useState<string | null>(null)
+  const [ , setNewSaleID]= useState<number | null>(null)
+  const [, setError] =useState<string | null>(null)
   const [numeroFactura, setNumeroFactura] = useState('')
   const toast = useToast()
   const {auth} = useAuth()
@@ -110,7 +111,7 @@ export default function PuntoDeVenta() {
         return;
       }
       try {
-        const response = await axios.get("https://localhost:4000/api/articulos/");
+        const response = await axios.get(`${api_url}articulos`);
         setArticulos(response.data.body);
       } catch (err) {
         if (err instanceof Error) {
@@ -136,8 +137,11 @@ export default function PuntoDeVenta() {
         return;
       }
       try {
-        const response = await axios.get("https://localhost:4000/api/sucursales/listar");
+        const response = await axios.get(`${api_url}sucursales/listar`);
         setSucursales(response.data.body);
+        if (response.data.body.length > 0) {
+          setSucursal(response.data.body[0].id.toString());
+        }
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
@@ -162,12 +166,14 @@ export default function PuntoDeVenta() {
         return;
       }
       try {
-        const response = await axios.get(`https://localhost:4000/api/depositos/sucursal/${localStorage.getItem('user_id')}`);
+        const response = await axios.get(`${api_url}depositos/sucursal/${localStorage.getItem('user_id')}`);
         setDepositos(response.data.body);
-        if (depositos.length < 1) {
+        if (response.data.body.length < 1) {
           setDepositos([{ id: 1, dep_descripcion: 'Casa Central' }]);
+          setDeposito('1');
         } else {
-          setDepositos(depositos);
+          setDepositos(response.data.body);
+          setDeposito(response.data.body[0].id.toString());
         }
       } catch (err) {
         if (err instanceof Error) {
@@ -194,7 +200,7 @@ export default function PuntoDeVenta() {
         return;
       }
       try {
-        const response = await axios.get(`https://localhost:4000/api/clientes`);
+        const response = await axios.get(`${api_url}clientes`);
         setClientes(response.data.body);
       } catch (err) {
         if (err instanceof Error) {
@@ -218,7 +224,7 @@ export default function PuntoDeVenta() {
         return;
       }
       try {
-        const response = await axios.get(`https://localhost:4000/api/usuarios`);
+        const response = await axios.get(`${api_url}usuarios`);
         setVendedores(response.data.body);
       } catch (err) {
         if (err instanceof Error) {
@@ -407,7 +413,7 @@ export default function PuntoDeVenta() {
       const filteredVendedores = vendedores.filter((vendedor) => 
         vendedor.op_nombre.toLowerCase().includes(busquedaVendedor.toLowerCase()) ||
         vendedor.op_codigo.toString().includes(busquedaVendedor)
-      ).slice(0, 5)
+      ).slice(0, 1)
       setRecomendacionesVendedores(filteredVendedores)
       if (filteredVendedores.length > 0) {
         setVendedor(filteredVendedores[0].op_nombre)
@@ -498,7 +504,6 @@ export default function PuntoDeVenta() {
       };
     })
   };
-  console.log(ventaData)
 
   const finalizarVenta = async () => {
     if (!clienteSeleccionado) {
@@ -557,7 +562,7 @@ export default function PuntoDeVenta() {
     }
   
     try {
-      const response = await axios.post('https://localhost:4000/api/venta/agregarVenta', ventaData,
+      const response = await axios.post(`${api_url}venta/agregarVenta`, ventaData,
         {
           method: 'POST',
           headers: {
@@ -637,7 +642,7 @@ export default function PuntoDeVenta() {
                     <FormLabel>Depósito</FormLabel>
                     <Select placeholder="Seleccionar depósito" value={deposito} onChange={(e) => setDeposito(e.target.value)}>
                       {depositos.map((deposito) => (
-                        <option key={deposito.id} value={deposito.id}>{deposito.dep_descripcion}</option>
+                        <option key={deposito.id} value={deposito.id.toString()}>{deposito.dep_descripcion}</option>
                       ))}
                     </Select>
                   </Box>
