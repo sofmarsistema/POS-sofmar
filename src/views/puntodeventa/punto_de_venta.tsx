@@ -107,36 +107,6 @@ export default function PuntoDeVenta() {
 
   useEffect(() => {
 
-    // Traer articulos
-    const fetchArticulos = async () => {
-      if (!auth) {
-        setError("No estás autentificado");
-        return;
-      }
-      try {
-        const response = await axios.get(`${api_url}articulos/`, {
-          params: {
-            buscar: articuloBusqueda,
-            id_deposito: parseInt(depositoId),
-            stock: 1
-          }
-        });
-        setArticulos(response.data.body);
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Error desconocido");
-        }
-        toast({
-          title: "Error",
-          description: "Hubo un problema al traer los artículos.",
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
-      }
-    };
     // traerSucursales
 
     const fetchSucursales = async () => {
@@ -258,7 +228,7 @@ export default function PuntoDeVenta() {
 
     
 
-    fetchArticulos();
+    
     fetchSucursales();
     fetchDepositos();
     fetchClientes();
@@ -391,16 +361,21 @@ export default function PuntoDeVenta() {
 
   const debouncedFetchArticulos = debounce(async (busqueda: string) => {
     if (busqueda.length > 0) {
+      if (!auth) {
+        setError("No estás autentificado");
+        return;
+      }
       try {
         const response = await axios.get(`${api_url}articulos/`, {
           params: {
             buscar: busqueda,
-            id_deposito: 1,
+            id_deposito: parseInt(depositoId),
             stock: 1
           }
         });
         const filteredRecomendaciones = response.data.body.slice(0, 5);
         setRecomendaciones(filteredRecomendaciones);
+        setArticulos(response.data.body);
       } catch (error) {
         console.error('Error al buscar artículos:', error);
         toast({
