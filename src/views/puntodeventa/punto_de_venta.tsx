@@ -24,6 +24,7 @@ import {
 import axios from 'axios'
 import { useAuth } from '@/services/AuthContext' 
 import { api_url } from '@/utils'
+import { debounce } from 'lodash';
 
 
 interface Sucursal {
@@ -74,6 +75,8 @@ export default function PuntoDeVenta() {
   const [articulos, setArticulos] = useState<Articulo[]>([])
   const [sucursal, setSucursal] = useState('')
   const [deposito, setDeposito] = useState('')
+  const [depositoSeleccionado, setDepositoSeleccionado] = useState<Deposito | null>(null);
+  const [depositoId, setDepositoId] = useState<string>('');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [moneda, setMoneda] = useState('PYG')
   const [vendedor, setVendedor] = useState('')
@@ -111,7 +114,13 @@ export default function PuntoDeVenta() {
         return;
       }
       try {
-        const response = await axios.get(`${api_url}articulos`);
+        const response = await axios.get(`${api_url}articulos/`, {
+          params: {
+            buscar: articuloBusqueda,
+            id_deposito: depositoId,
+            stock: 1
+          }
+        });
         setArticulos(response.data.body);
       } catch (err) {
         if (err instanceof Error) {
@@ -128,7 +137,6 @@ export default function PuntoDeVenta() {
         });
       }
     };
-
     // traerSucursales
 
     const fetchSucursales = async () => {
@@ -376,20 +384,52 @@ export default function PuntoDeVenta() {
     return total;
   }
 
-  const handleBusqueda = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const busqueda = e.target.value
-    setArticuloBusqueda(busqueda)
-
+  const debouncedFetchArticulos = debounce(async (busqueda: string) => {
     if (busqueda.length > 0) {
-      const filteredRecomendaciones = articulos.filter((articulo) => 
-        articulo.ar_descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
-        articulo.ar_codbarra.toLowerCase().includes(busqueda.toLowerCase())
-      ).slice(0, 5)
-      setRecomendaciones(filteredRecomendaciones)
+      try {
+        const response = await axios.get(`${api_url}articulos/`, {
+          params: {
+            buscar: busqueda,
+            id_deposito: depositoId,
+            stock: 1
+          }
+        });
+        const filteredRecomendaciones = response.data.body.slice(0, 5);
+        setRecomendaciones(filteredRecomendaciones);
+      } catch (error) {
+        console.error('Error al buscar artículos:', error);
+        toast({
+          title: "Error",
+          description: "Hubo un problema al buscar los artículos.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+        setRecomendaciones([]);
+      }
     } else {
-      setRecomendaciones([])
+      setRecomendaciones([]);
     }
-  }
+  }, 300);
+  
+  const handleBusqueda = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const busqueda = e.target.value;
+    setArticuloBusqueda(busqueda);
+    debouncedFetchArticulos(busqueda);
+  };
+  
+  useEffect(() => {
+    return () => {
+      debouncedFetchArticulos.cancel();
+    };
+  }, []);
+
+  const handleDepositoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setDepositoId(id);
+    const deposito = depositos.find(d => d.id.toString() === id) || null;
+    setDepositoSeleccionado(deposito);
+  };
 
   const handleBusquedaCliente = (e: React.ChangeEvent<HTMLInputElement>) => {
     const busquedaCliente = e.target.value
@@ -407,22 +447,25 @@ export default function PuntoDeVenta() {
   }
 
   const handleBusquedaVendedor = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const busquedaVendedor = e.target.value
-    setBuscarVendedor(busquedaVendedor)
-    if(busquedaVendedor.length > 0){
-      const filteredVendedores = vendedores.filter((vendedor) => 
+    const busquedaVendedor = e.target.value;
+    setBuscarVendedor(busquedaVendedor);
+    
+    if (busquedaVendedor.length > 0) {
+      const filteredVendedores = vendedores.filter((vendedor) =>
         vendedor.op_nombre.toLowerCase().includes(busquedaVendedor.toLowerCase()) ||
         vendedor.op_codigo.toString().includes(busquedaVendedor)
-      ).slice(0, 1)
-      setRecomendacionesVendedores(filteredVendedores)
+      ).slice(0, 1);
+      
+      setRecomendacionesVendedores(filteredVendedores);
+  
       if (filteredVendedores.length > 0) {
-        setVendedor(filteredVendedores[0].op_nombre)
-        setOperador(filteredVendedores[0].op_codigo)
+        setVendedor(filteredVendedores[0].op_nombre);
+        setOperador(filteredVendedores[0].op_codigo);
       }
-  }else{
-    setRecomendacionesVendedores([])
-  }
-}
+    } else {
+      setRecomendacionesVendedores([]);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -640,9 +683,9 @@ export default function PuntoDeVenta() {
                   </Box>
                   <Box>
                     <FormLabel>Depósito</FormLabel>
-                    <Select placeholder="Seleccionar depósito" value={deposito} onChange={(e) => setDeposito(e.target.value)}>
-                      {depositos.map((deposito) => (
-                        <option key={deposito.id} value={deposito.id.toString()}>{deposito.dep_descripcion}</option>
+                    <Select placeholder="Seleccionar depósito" value={depositoId} onChange={handleDepositoChange}>
+                    {depositos.map((dep) => (
+                        <option key={dep.id} value={dep.id.toString()}>{dep.dep_descripcion}</option>
                       ))}
                     </Select>
                   </Box>
@@ -667,6 +710,11 @@ export default function PuntoDeVenta() {
                       aria-autocomplete="list"
                       aria-controls="vendedor-recommendations"
                     />
+                    {recomedacionesVendedores.length === 0 && buscarVendedor.length > 0 && (
+                        <Text color="red.500" mt={2}>
+                          No se encontró vendedor con ese código
+                        </Text>
+                      )}
                     {recomedacionesVendedores.length>0&&(
                       <Box
                       id="vendedor-recommendations"
