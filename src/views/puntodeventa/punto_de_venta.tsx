@@ -20,6 +20,7 @@ import {
   useMediaQuery,
   Divider,
   ChakraProvider,
+  Checkbox,
 } from '@chakra-ui/react'
 import axios from 'axios'
 import { useAuth } from '@/services/AuthContext' 
@@ -99,6 +100,7 @@ export default function PuntoDeVenta() {
   const [ , setNewSaleID]= useState<number | null>(null)
   const [, setError] =useState<string | null>(null)
   const [numeroFactura, setNumeroFactura] = useState('')
+  const [buscarSoloConStock, setBuscarSoloConStock] = useState(true)
   const toast = useToast()
   const {auth} = useAuth()
 
@@ -370,7 +372,7 @@ export default function PuntoDeVenta() {
           params: {
             buscar: busqueda,
             id_deposito: parseInt(depositoId),
-            stock: 1
+            stock: buscarSoloConStock ? 1 : 0
           }
         });
         const filteredRecomendaciones = response.data.body.slice(0, 5);
@@ -409,6 +411,13 @@ export default function PuntoDeVenta() {
     setDepositoId(id);
     const deposito = depositos.find(d => d.id.toString() === id) || null;
     setDepositoSeleccionado(deposito);
+  };
+
+  const handleStockCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBuscarSoloConStock(e.target.checked);
+    if (articuloBusqueda.length > 0) {
+      debouncedFetchArticulos(articuloBusqueda);
+    }
   };
 
   const handleBusquedaCliente = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -832,6 +841,12 @@ export default function PuntoDeVenta() {
                     width={isMobile ? "full" : "80px"}
                     min={1}
                   />
+                  <Checkbox 
+                    isChecked={buscarSoloConStock}
+                    onChange={handleStockCheckboxChange}
+                  >
+                    Buscar solo con stock
+                  </Checkbox>
                   <Button colorScheme="green" onClick={agregarItem} flexShrink={0}>
                     <Search size={20} className="mr-2" /> Agregar
                   </Button>
