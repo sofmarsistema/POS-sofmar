@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Box, Flex, Icon, Text, Grid, GridItem, useMediaQuery, IconButton } from '@chakra-ui/react'
-import { Link, useLocation } from 'react-router-dom'
-import { ChartSpline, ShoppingCart, ScanSearch, Settings, CircleArrowUp, Users, CreditCard } from 'lucide-react'
+import { Box, Flex, Icon, Text, Grid, GridItem, useMediaQuery, IconButton} from '@chakra-ui/react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { ChartSpline, ShoppingCart, ScanSearch, Settings, CircleArrowUp, Users, CreditCard, LogOut } from 'lucide-react'
+import { useAuth } from '@/services/AuthContext'
 
 interface NavItem {
   name: string
@@ -26,6 +27,8 @@ const Sidebar = () => {
   const [isMobileExpanded, setIsMobileExpanded] = useState(false)
   const location = useLocation()
   const mobileBarRef = useRef<HTMLDivElement>(null)
+  const {logout} = useAuth();
+  const navigate = useNavigate();
 
   const handleMouseEnter = () => {
     if (isLargerThan768) {
@@ -43,6 +46,10 @@ const Sidebar = () => {
     setIsMobileExpanded(!isMobileExpanded)
   }
 
+  const handleLogout = ()=>{
+    logout();
+    navigate('/login')
+  };
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (mobileBarRef.current && !mobileBarRef.current.contains(event.target as Node)) {
@@ -179,8 +186,20 @@ const Sidebar = () => {
       overflowY="auto"
       boxShadow="2px 0 10px rgba(0, 0, 0, 0.1)"
     >
-      <Flex direction="column" h="100%" align="stretch">
+      <Flex direction="column" h="90%" align="stretch">
         {NAV_ITEMS.map(renderNavItem)}
+      </Flex>
+      <Flex
+      align='center'
+      p={2}
+      direction={'column'}
+      onClick={handleLogout}
+      _hover={{ color: 'green.100', cursor: 'pointer' }}
+        >
+        <LogOut />
+        {isExpanded?(
+          <h1>Cerrar Sesion</h1>
+        ): null}
       </Flex>
     </Box>
   )

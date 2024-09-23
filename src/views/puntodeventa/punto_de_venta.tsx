@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { Search, ShoppingCart } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
+import { Minus, ShoppingCart } from 'lucide-react'
 import { 
   Box, 
   Button, 
@@ -53,12 +53,14 @@ interface Cliente {
 }
 
 interface Articulo {
-  al_codigo: number
+  ar_codigo: number
   ar_descripcion: string
-  ar_pcg: number
+  ar_pvg: number
+  ar_pvcredito: number
+  ar_pvmostrador: number
   ar_codbarra: string
   ar_iva: number
-  ar_cantidad: number
+  al_cantidad: number
   al_vencimiento: string
 }
 
@@ -67,6 +69,18 @@ const tasasDeCambio: { [key: string]: number } = {
   USD: 0.00013,
   PYG: 1,
 }
+
+      {/* guardar items en el localstorage para evitar perder articulos por si se actualiza la pagina*/}
+
+      const saveItemsToLocalStorage = (items: any[]) => {
+        localStorage.setItem('cartItems', JSON.stringify(items));
+      };
+      
+      const loadItemsFromLocalStorage = (): any[] => {
+        const savedItems = localStorage.getItem('cartItems');
+        return savedItems ? JSON.parse(savedItems) : [];
+      };
+
 
 export default function PuntoDeVenta() {
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
@@ -86,8 +100,7 @@ export default function PuntoDeVenta() {
   const [articuloBusqueda, setArticuloBusqueda] = useState('')
   const [clienteBusqueda, setClienteBusqueda] = useState('')
   const [cantidad, setCantidad] = useState(1)
-  const [items, setItems] = useState<{ id: number, nombre: string, precioUnitario: number, cantidad: number, subtotal: number, impuesto:number, impuesto5:number, impuesto10:number,exentas:number, precioOriginal: number}[]>([])
-  const [selectedItem, setSelectedItem] = useState<typeof articulos[0] | null>(null)
+  const [items, setItems] = useState<{ id: number, nombre: string, precioUnitario: number, cantidad: number, subtotal: number, impuesto:number, impuesto5:number, impuesto10:number,exentas:number, precioOriginal: number}[]>(loadItemsFromLocalStorage());  const [selectedItem, setSelectedItem] = useState<typeof articulos[0] | null>(null)
   const [condicionVenta, setCondicionVenta] = useState(0)
   const [notaFiscal, setNotaFiscal] = useState(0)
   const [isMobile] = useMediaQuery('(max-width: 48em)')
@@ -103,6 +116,10 @@ export default function PuntoDeVenta() {
   const [buscarSoloConStock, setBuscarSoloConStock] = useState(true)
   const toast = useToast()
   const {auth} = useAuth()
+  const vendedorRef = useRef<HTMLInputElement>(null);
+  const clienteRef = useRef<HTMLInputElement>(null);
+  const articuloRef = useRef<HTMLInputElement>(null);
+  const cantidadRef = useRef<HTMLInputElement>(null);
 
 
   // Funciones y Effects para traer los datos//
@@ -226,20 +243,12 @@ export default function PuntoDeVenta() {
         });
       }
     };
-
-
-    
-
     
     fetchSucursales();
     fetchDepositos();
     fetchClientes();
     fetchVendedores();
-
-
   }, [auth, toast]);
-
-
 
 
   const formatCurrency = (amount: number) => {
@@ -319,35 +328,43 @@ export default function PuntoDeVenta() {
     };
 
 
-  const agregarItem = () => {
-    if (selectedItem) {
-      const precioEnMonedaActual = selectedItem.ar_pcg * tasasDeCambio[moneda];
-      const impuestos = calcularImpuesto(selectedItem.ar_pcg, selectedItem.ar_iva)
-      const nuevoItem = {
-        id: selectedItem.al_codigo,
-        nombre: selectedItem.ar_descripcion,
-        precioOriginal: selectedItem.ar_pcg,
-        precioUnitario: precioEnMonedaActual,
-        cantidad: cantidad,
-        impuesto: selectedItem.ar_iva,
-        impuesto5: impuestos.impuesto5,
-        impuesto10: impuestos.impuesto10,
-        exentas: impuestos.exentas,
-        subtotal: precioEnMonedaActual * cantidad,
+    const agregarItem = () => {
+      if (selectedItem) {
+        const precioEnMonedaActual = selectedItem.ar_pvg * tasasDeCambio[moneda];
+        const impuestos = calcularImpuesto(selectedItem.ar_pvg, selectedItem.ar_iva)
+        const nuevoItem = {
+          id: selectedItem.ar_codigo,
+          nombre: selectedItem.ar_descripcion,
+          precioOriginal: selectedItem.ar_pvg,
+          precioUnitario: precioEnMonedaActual,
+          cantidad: cantidad,
+          impuesto: selectedItem.ar_iva,
+          impuesto5: impuestos.impuesto5,
+          impuesto10: impuestos.impuesto10,
+          exentas: impuestos.exentas,
+          subtotal: precioEnMonedaActual * cantidad,
+        }
+        const newItems = [...items, nuevoItem];
+        setItems(newItems);
+        saveItemsToLocalStorage(newItems);
+        setArticuloBusqueda('')
+        setCantidad(1)
+        setSelectedItem(null)
+      } else {
+        toast({
+          title: "Artículo no seleccionado",
+          status: "error",
+          duration: 1000,
+          isClosable: true,
+        })
       }
-      setItems([...items, nuevoItem])
-      setArticuloBusqueda('')
-      setCantidad(1)
-      setSelectedItem(null)
-    } else {
-      toast({
-        title: "Artículo no seleccionado",
-        status: "error",
-        duration: 1000,
-        isClosable: true,
-      })
     }
-  }
+
+    const eliminarItem = (index: number) => {
+      const newItems = items.filter((_, i) => i !== index);
+      setItems(newItems);
+      saveItemsToLocalStorage(newItems);
+    }
   
   const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
 
@@ -361,11 +378,23 @@ export default function PuntoDeVenta() {
     return total;
   }
 
+  const handleBusqueda = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const busqueda = e.target.value;
+    setArticuloBusqueda(busqueda);
+    debouncedFetchArticulos(busqueda);
+  };
+
   const debouncedFetchArticulos = debounce(async (busqueda: string) => {
     if (busqueda.length > 0) {
       if (!auth) {
-        setError("No estás autentificado");
-        return;
+        toast({
+          title: "Error de autenticación",
+          description: "No estás autentificado",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        })
+        return
       }
       try {
         const response = await axios.get(`${api_url}articulos/`, {
@@ -374,37 +403,42 @@ export default function PuntoDeVenta() {
             id_deposito: parseInt(depositoId),
             stock: buscarSoloConStock ? 1 : 0
           }
-        });
-        const filteredRecomendaciones = response.data.body.slice(0, 5);
-        setRecomendaciones(filteredRecomendaciones);
-        setArticulos(response.data.body);
+        })
+        setRecomendaciones(response.data.body)
+        setArticulos(response.data.body)
+        
       } catch (error) {
-        console.error('Error al buscar artículos:', error);
+        console.error('Error al buscar artículos:', error)
         toast({
           title: "Error",
           description: "Hubo un problema al buscar los artículos.",
           status: "error",
           duration: 3000,
           isClosable: true,
-        });
-        setRecomendaciones([]);
+        })
+        setRecomendaciones([])
       }
     } else {
-      setRecomendaciones([]);
+      setRecomendaciones([])
     }
-  }, 300);
+  }, 300)
+
   
-  const handleBusqueda = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const busqueda = e.target.value;
-    setArticuloBusqueda(busqueda);
-    debouncedFetchArticulos(busqueda);
-  };
+
+  
+
   
   useEffect(() => {
     return () => {
       debouncedFetchArticulos.cancel();
     };
   }, []);
+
+
+
+  useEffect(() => {
+    saveItemsToLocalStorage(items);
+  }, [items]);
 
   const handleDepositoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
@@ -443,16 +477,21 @@ export default function PuntoDeVenta() {
       const filteredVendedores = vendedores.filter((vendedor) =>
         vendedor.op_nombre.toLowerCase().includes(busquedaVendedor.toLowerCase()) ||
         vendedor.op_codigo.toString().includes(busquedaVendedor)
-      ).slice(0, 1);
+      ).slice(0, 5);
       
       setRecomendacionesVendedores(filteredVendedores);
   
       if (filteredVendedores.length > 0) {
         setVendedor(filteredVendedores[0].op_nombre);
         setOperador(filteredVendedores[0].op_codigo);
+      } else {
+        setVendedor('');
+        setOperador('');
       }
     } else {
       setRecomendacionesVendedores([]);
+      setVendedor('');
+      setOperador('');
     }
   };
 
@@ -607,6 +646,7 @@ export default function PuntoDeVenta() {
         setNewSaleID(response.data.body);
   
         setItems([]);
+        saveItemsToLocalStorage([]); // Limpiar el localStorage
         setClienteSeleccionado(null);
         setClienteBusqueda('')
         setDescuentoValor(0);
@@ -636,6 +676,17 @@ export default function PuntoDeVenta() {
     }
   };
 
+  const cancelarVenta =  async ()=>{
+    setItems([]);
+    saveItemsToLocalStorage([]);
+    setClienteSeleccionado(null);
+    setClienteBusqueda('')
+    setDescuentoValor(0);
+    setCondicionVenta(0);
+    setNotaFiscal(0);
+    setNumeroFactura('')
+  }
+
 
       const getCreditColor= (credit:number)=>{
         if (credit<0) return 'red.500';
@@ -643,25 +694,84 @@ export default function PuntoDeVenta() {
         return 'green.500';
       };
 
-      const eliminarItem = (index: number) => {
-        setItems(items.filter((_, i) => i !== index));
-      }
-
       const actualizarMoneda= (n:number)=>{
         const precioEnMonedaActual = n * tasasDeCambio[moneda];
         return precioEnMonedaActual;
       }
 
+      const selectFirstRecommendation = (
+        recommendations: any[] | undefined,
+        setSelected: (item: any) => void,
+        clearRecommendations: () => void,
+        setSearchValue: (value: string) => void
+      ) => {
+        if (recommendations && recommendations.length > 0) {
+          const firstItem = recommendations[0];
+          setSelected(firstItem);
+          clearRecommendations();
+          setSearchValue(firstItem.nombre || firstItem.cli_razon || firstItem.ar_descripcion || firstItem.op_nombre);
+          return true;
+        }
+        return false;
+      };
+
+
+      //todo esto maneja el uso de enter para cambiar de input
+
+      const handleEnterKey = (
+        e: React.KeyboardEvent<HTMLElement>,
+        nextRef: React.RefObject<HTMLElement>,
+        selectFirst: () => boolean
+      ) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (selectFirst && !selectFirst()) {
+            nextRef.current?.focus();
+          }
+        }
+      };
+      
+      const selectFirstVendedor = () => {
+        if (!recomedacionesVendedores || recomedacionesVendedores.length === 0) return false;
+        const firstVendedor = recomedacionesVendedores[0];
+        setVendedor(firstVendedor.op_nombre);
+        setOperador(firstVendedor.op_codigo);
+        setBuscarVendedor(firstVendedor.op_codigo);
+        setRecomendacionesVendedores([]);
+        return true;
+      };
+      
+      const selectFirstCliente = () => {
+        return selectFirstRecommendation(
+          recomendacionesClientes,
+          setClienteSeleccionado,
+          () => setRecomendacionesClientes([]),
+          setClienteBusqueda
+        );
+      };
+      
+      const selectFirstArticulo = () => {
+        return selectFirstRecommendation(
+          recomendaciones,
+          setSelectedItem,
+          () => setRecomendaciones([]),
+          setArticuloBusqueda
+        );
+      };
+
   return (
     <div>
           <ChakraProvider>
-              <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg">
+              <Box maxW="100%" mx="auto" p={isMobile ? 2 : 6} bg="white" shadow="xl" rounded="lg" fontSize={'smaller'}>
               <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile ? 4 : 6} alignItems="center" rounded="lg">
                 <ShoppingCart size={24} className="mr-2" />
-                <Heading size={isMobile ? 'md' : 'lg'}>Punto de Venta</Heading>
+                <Heading size={isMobile ? 'sm' : 'md'}>Punto de Venta</Heading>
               </Flex>
-              <Box p={isMobile ? 2 : 6}>
-                <Grid templateColumns={isMobile ? "repeat(1, 1fr)" : "repeat(3, 1fr)"} gap={4} mb={6}>
+              <Flex
+                flexDirection={isMobile? 'column' : 'row'}
+              >
+              <Box p={isMobile ? 2 : 4}>
+                <Grid templateColumns={isMobile ? "repeat(1, 1fr)" : "repeat(3, 1fr)"} gap={3} mb={4}>
                   <Box>
                     <FormLabel>Sucursal</FormLabel>
                     <Select placeholder="Seleccionar sucursal" value={sucursal} onChange={(e) => setSucursal(e.target.value)}>
@@ -696,29 +806,42 @@ export default function PuntoDeVenta() {
                       placeholder="Buscar vendedor por código"
                       value={buscarVendedor}
                       onChange={handleBusquedaVendedor}
+                      onFocus={() => {
+                        if (vendedor) {
+                          setBuscarVendedor('');
+                          setRecomendacionesVendedores([]);
+                        }
+                      }}
                       aria-autocomplete="list"
                       aria-controls="vendedor-recommendations"
+                      ref={vendedorRef}
+                      onKeyDown={(e) => handleEnterKey(e, clienteRef, selectFirstVendedor)}
                     />
-                    {recomedacionesVendedores.length === 0 && buscarVendedor.length > 0 && (
-                        <Text color="red.500" mt={2}>
-                          No se encontró vendedor con ese código
-                        </Text>
-                      )}
-                    {recomedacionesVendedores.length>0&&(
+                    {vendedor && (
+                      <Text mt={2} fontWeight="bold" color="green.500">
+                        Vendedor seleccionado: {vendedor}
+                      </Text>
+                    )}
+                    {recomedacionesVendedores.length === 0 && buscarVendedor.length > 0 && !vendedor && (
+                      <Text color="red.500" mt={2}>
+                        No se encontró vendedor con ese código
+                      </Text>
+                    )}
+                    {recomedacionesVendedores.length > 0 && (
                       <Box
-                      id="vendedor-recommendations"
-                      position="absolute"
-                      top="100%"
-                      left={0}
-                      right={0}
-                      zIndex={20}
-                      bg="white"
-                      boxShadow="md"
-                      borderRadius="md"
-                      mt={1}
-                      className="recomendaciones-menu"
-                      maxH="200px"
-                      overflowY="auto"
+                        id="vendedor-recommendations"
+                        position="absolute"
+                        top="100%"
+                        left={0}
+                        right={0}
+                        zIndex={20}
+                        bg="white"
+                        boxShadow="md"
+                        borderRadius="md"
+                        mt={1}
+                        className="recomendaciones-menu"
+                        maxH="200px"
+                        overflowY="auto"
                       >
                         {recomedacionesVendedores.map((vendedor) => (
                           <Box
@@ -728,7 +851,7 @@ export default function PuntoDeVenta() {
                             cursor="pointer"
                             onClick={() => {
                               setBuscarVendedor(vendedor.op_codigo)
-                              setVendedor(vendedor.op_nombre.toString())
+                              setVendedor(vendedor.op_nombre)
                               setOperador(vendedor.op_codigo)
                               setRecomendacionesVendedores([])
                             }}
@@ -749,6 +872,8 @@ export default function PuntoDeVenta() {
                       onChange={handleBusquedaCliente}
                       aria-autocomplete="list"
                       aria-controls="cliente-recommendations"
+                      ref={clienteRef}
+                      onKeyDown={(e) => handleEnterKey(e, articuloRef, selectFirstCliente)}
                     />
                     {recomendacionesClientes.length > 0 && (
                       <Box
@@ -798,6 +923,8 @@ export default function PuntoDeVenta() {
                       placeholder="Buscar artículo" 
                       value={articuloBusqueda} 
                       onChange={handleBusqueda}
+                      ref={articuloRef}
+                      onKeyDown={(e) => handleEnterKey(e, cantidadRef, selectFirstArticulo)}
                     />
                     {recomendaciones.length > 0 && (
                       <Box
@@ -810,10 +937,11 @@ export default function PuntoDeVenta() {
                         boxShadow={'md'}
                         borderRadius={'md'}
                         className="recomendaciones-menu"
+                        maxHeight={'300px'}
                       >
                         {recomendaciones.map((articulo) => (
                           <Box
-                            key={articulo.al_codigo}
+                            key={articulo.ar_codigo}
                             p={2}
                             _hover={{bg: 'gray.100'}}
                             onClick={() => {
@@ -824,10 +952,19 @@ export default function PuntoDeVenta() {
                           >
                             <Flex >
                             {articulo.ar_descripcion}
-                              <Text as="span" color="gray.500" fontSize={'12px'}>//Codigo: {articulo.al_codigo}</Text>
-                              <Text as="span" color="gray.500" fontSize={'12px'}>//Precio: {articulo.ar_pcg}</Text>
-                              <Text as="span" color="gray.500" fontSize={'12px'}>//ve_vencimiento: {articulo.al_vencimiento.substring(0,10)}</Text>
-                            </Flex>
+                              <Minus />
+                              <Text as="span" color="gray.500" fontSize={'14px'}>Codigo: {articulo.ar_codbarra}</Text>
+                              <Minus />
+                              <Text as="span" color="red.500" fontSize={'14px'}>Precio Contado: {formatCurrency(articulo.ar_pvg)}</Text>
+                              <Minus />
+                              <Text as="span" color="red.500" fontSize={'14px'}>Precio Credito: {formatCurrency(articulo.ar_pvcredito)}</Text>
+                              <Minus />
+                              <Text as="span" color="red.500" fontSize={'14px'}>Precio Mostrador: {formatCurrency(articulo.ar_pvmostrador)}</Text>
+                              <Minus/>
+                              <Text as="span" color="gray.500" fontSize={'14px'}>Stock {articulo.al_cantidad}</Text>
+                              <Minus />
+                              <Text as="span" color="gray.500" fontSize={'14px'}>Vencimiento: {articulo.al_vencimiento.substring(0,10)}</Text>{/*que enter cambie los inputs, y agregar cierre de sesion resaltar color del articulo agregar mas recomendaciones*/}
+                            </Flex>{/*/condicionar vencimiento*/}
                           </Box>
                         ))}
                       </Box>
@@ -838,22 +975,30 @@ export default function PuntoDeVenta() {
                     placeholder="Cantidad" 
                     value={cantidad} 
                     onChange={(e) => setCantidad(parseInt(e.target.value))}
-                    width={isMobile ? "full" : "80px"}
+                    width={isMobile ? "full" : "60px"}
                     min={1}
+                    ref={cantidadRef}
+                    onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      agregarItem();
+                      articuloRef.current?.focus();
+                      }
+                    }}
                   />
                   <Checkbox 
                     isChecked={buscarSoloConStock}
                     onChange={handleStockCheckboxChange}
                   >
-                    Buscar solo con stock
+                    En stock
                   </Checkbox>
-                  <Button colorScheme="green" onClick={agregarItem} flexShrink={0}>
-                    <Search size={20} className="mr-2" /> Agregar
+                  <Button colorScheme="green" onClick={agregarItem} flexShrink={0} >
+                    +
                   </Button>
                 </Flex>
-                <Box overflowX={'auto'}>
-                  <Table variant="striped">
-                    <Thead>
+                <Box overflowX={'auto'} height={'300px'} width={isMobile? '100%': '1400px'}>
+                  <Table variant="striped" size={'sm'}>
+                    <Thead position="sticky" top={0} bg="white" zIndex={0}>
                       <Tr>
                         <Th>Código</Th>
                         <Th>Nombre</Th>
@@ -876,11 +1021,11 @@ export default function PuntoDeVenta() {
                           <Td isNumeric>{formatCurrency(actualizarMoneda(item.impuesto10)*item.cantidad)}</Td>
                           <Td>
                             <Button
-                              size="sm"
+                              size="xs"
                               colorScheme="red"
                               onClick={() => eliminarItem(index)}
                             >
-                              Eliminar
+                              x
                             </Button>
                           </Td>
                         </Tr>
@@ -889,11 +1034,11 @@ export default function PuntoDeVenta() {
                   </Table>
                 </Box>
               </Box>
-              <Flex justify="space-between" p={isMobile ? 2 : 6} bg="gray.50" rounded="lg" flexDirection={isMobile ? 'column' : 'row'} gap={isMobile ? 4 : 0}>
-                <Flex flexDirection={isMobile ? 'column' : 'row'} gap={4}>
+              <Flex justify="space-between" p={isMobile ? 2 : 4}  rounded="lg" flexDirection={'column'} gap={isMobile ? 3 : 0}>
+                <Flex flexDirection={isMobile ? 'column' : 'row'} px={4} gap={4}>
                   <Box>
-                    <Text fontWeight={'bold'} mb={2}>Condición de Venta</Text>
-                    <Flex flexDir={isMobile ? 'column' : 'row'} gap={2}>
+                    <Text fontWeight={'semibold'} mb={2}>Condición de Venta</Text>
+                    <Flex flexDir={'column'} gap={2}>
                       <Button 
                         variant={condicionVenta === 0 ? 'solid' : 'outline'}
                         bg={condicionVenta === 0 ? 'blue.500' : 'transparent'}
@@ -903,7 +1048,7 @@ export default function PuntoDeVenta() {
                           bg: condicionVenta === 0 ? 'blue.600' : 'blue.50',
                         }}
                         onClick={() => setCondicionVenta(0)}
-                        width={isMobile ? "full" : "auto"}
+                        width={isMobile ? "full" : "120px"}
                       >
                         Contado
                       </Button>
@@ -916,7 +1061,7 @@ export default function PuntoDeVenta() {
                           bg: condicionVenta === 1 ? 'blue.600' : 'blue.50',
                         }}
                         onClick={() => setCondicionVenta(1)}
-                        width={isMobile ? "full" : "auto"}
+                        width={isMobile ? "full" : "120px"}
                         isDisabled={!clienteSeleccionado || clienteSeleccionado.cli_limitecredito <= 0}
                       >
                         Crédito
@@ -924,8 +1069,8 @@ export default function PuntoDeVenta() {
                     </Flex>
                   </Box>
                   <Box>
-                    <Text fontWeight="bold" mb={2}>Nota Fiscal</Text>
-                    <Flex flexDirection={isMobile ? 'column' : 'row'} gap={2}>
+                    <Text fontWeight="semibold" mb={2}>Nota Fiscal</Text>
+                    <Flex flexDirection={'column'} gap={2}>
                       <Button 
                         variant={notaFiscal === 0 ? 'solid' : 'outline'}
                         bg={notaFiscal === 0 ? 'blue.500' : 'transparent'}
@@ -935,7 +1080,7 @@ export default function PuntoDeVenta() {
                           bg: notaFiscal === 0 ? 'blue.600' : 'blue.50',
                         }}
                         onClick={() => setNotaFiscal(0)}
-                        width={isMobile ? "full" : "auto"}
+                        width={isMobile ? "full" : "120px"}
                       >
                         Factura
                       </Button>
@@ -948,24 +1093,16 @@ export default function PuntoDeVenta() {
                           bg: notaFiscal === 1 ? 'blue.600' : 'blue.50',
                         }}
                         onClick={() => setNotaFiscal(1)}
-                        width={isMobile ? "full" : "auto"}
+                        width={isMobile ? "full" : "120px"}
                       >
                         Nota Comun
                       </Button>
                     </Flex>
-                    <Box>
-                    <FormLabel>Número de Factura</FormLabel>
-                    <Input 
-                      type="text" 
-                      placeholder="Ingrese el número de factura" 
-                      value={numeroFactura} 
-                      onChange={(e) => setNumeroFactura(e.target.value)}
-                    />
-                  </Box>
                   </Box>
                 </Flex>
-                <Flex mt={isMobile ? 4 : 0} gap={4} flexDirection={isMobile? 'row': 'column'} alignItems={'center'}>
-                <Text fontSize="lg" fontWeight={'bold'}>Descuento</Text>
+                <Flex mt={isMobile ? 4 : 0} gap={2} flexDirection={'column'} alignItems={'center'}>
+                <Text fontSize="md" fontWeight={'semibold'}>Descuento</Text>
+                  <Flex>
                   <Select value={descuentoTipo}
                           onChange={(e)=> {
                             setDescuentoTipo(e.target.value as 'porcentaje' | 'valor')
@@ -979,25 +1116,40 @@ export default function PuntoDeVenta() {
                             placeholder='Descuento'
                             value={descuentoValor}
                             onChange={(e)=> setDescuentoValor(parseInt(e.target.value))}
-                            width={'150px'}
+                            width={'90px'}
                             ml={2}
                         />
+                  </Flex>
                 </Flex>
-                <Box>
-                    <Text fontSize="md" fontWeight="bold">Total Exentas: {formatCurrency(calcularTotalExcentas())}</Text>
+                <Box textAlign={'center'} mb={2}>
+                    <FormLabel>Número de Factura</FormLabel>
+                    <Input 
+                      type="text" 
+                      placeholder="Ingrese el número de factura" 
+                      value={numeroFactura} 
+                      onChange={(e) => setNumeroFactura(e.target.value)}
+                      width={isMobile? 'full': '240px'}
+                    />
+                  </Box>
+                <Box pt={2}>
+                    <Text fontSize="sm" fontWeight="bold">Total Exentas: {formatCurrency(calcularTotalExcentas())}</Text>
                     <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-                    <Text fontSize="md" fontWeight="bold">Total IVA 5%: {formatCurrency(calcularTotal5()/20)}</Text>
+                    <Text fontSize="sm" fontWeight="bold">Total IVA 5%: {formatCurrency(calcularTotal5()/20)}</Text>
                     <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-                    <Text fontSize="md" fontWeight="bold">Total IVA 10%: {formatCurrency(calcularTotal10()/10)}</Text>
+                    <Text fontSize="sm" fontWeight="bold">Total IVA 10%: {formatCurrency(calcularTotal10()/10)}</Text>
                     <Divider borderWidth={'2px'} borderColor={'blue.500'} my={1}/>
-                    <Text fontSize="md" fontWeight="bold">Total Impuestos: {formatCurrency(calcularTotalImpuestos())}</Text>
+                    <Text fontSize="sms" fontWeight="bold">Total Impuestos: {formatCurrency(calcularTotalImpuestos())}</Text>
                 </Box>
                 <Box textAlign={isMobile ? "left" : "right"}>
                   <Text fontSize="lg" fontWeight="bold">Subtotal: {formatCurrency(items.reduce((acc, item) => acc + item.subtotal, 0))}</Text>
                   <Text fontSize="lg" fontWeight="bold">Descuento: {descuentoTipo === 'porcentaje' ? `${descuentoValor}%` : formatCurrency(descuentoValor*tasasDeCambio[moneda])}</Text>
                   <Text fontSize="lg" fontWeight="bold">Total Neto: {formatCurrency(calcularTotal())}</Text>
-                  <Button colorScheme="blue" mt={4} width={isMobile ? "full" : "auto"} onClick={finalizarVenta}>Finalizar Venta</Button>
+                  <Flex gap={4}>
+                    <Button colorScheme="red" mt={4} width={isMobile ? "full" : "auto"} onClick={cancelarVenta}>Cancelar Venta</Button>
+                    <Button colorScheme="blue" mt={4} width={isMobile ? "full" : "auto"} onClick={finalizarVenta}>Finalizar Venta</Button>
+                  </Flex>
                 </Box>
+              </Flex>
               </Flex>
             </Box>
           </ChakraProvider>
