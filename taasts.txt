@@ -1,8 +1,0 @@
-Hacer el tamano un poco mas pequeno, zoom al 80 aprox*
-guardar el estado actual para no perder los items agregados a la tabla*
-agregar boton de  cerrar ventana, agregar boton cerrar sesion en sidebar
-
-imitar:
-
-For i=1 To ln
-	vBusqueda = vBusqueda + " "+ "'" + "%"+la(i)+"%" + "'"
