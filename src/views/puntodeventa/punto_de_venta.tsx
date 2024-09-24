@@ -267,11 +267,11 @@ export default function PuntoDeVenta() {
 
     const calcularImpuesto = (precio: number, impuesto: number) => {
       switch(impuesto){
-        case 2:
-          return {impuesto5: precio * 1, impuesto10: 0, exentas: 0};
-        case 3:
-          return {impuesto5: 0, impuesto10: precio * 1, exentas: 0};
         case 1:
+          return {impuesto5: precio * 1, impuesto10: 0, exentas: 0};
+        case 2:
+          return {impuesto5: 0, impuesto10: precio * 1, exentas: 0};
+        case 0:
           return {impuesto5: 0, impuesto10: 0, exentas: precio};
         default:
           return {impuesto5: 0, impuesto10: 0, exentas: 0};
@@ -937,7 +937,8 @@ export default function PuntoDeVenta() {
                         boxShadow={'md'}
                         borderRadius={'md'}
                         className="recomendaciones-menu"
-                        maxHeight={'300px'}
+                        maxHeight={'600px'}
+                        overflowY={'auto'}
                       >
                         {recomendaciones.map((articulo) => (
                           <Box

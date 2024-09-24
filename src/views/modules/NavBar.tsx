@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Box, Flex, Icon, Text, Grid, GridItem, useMediaQuery, IconButton} from '@chakra-ui/react'
+import { Box, Flex, Icon, Text, Grid, GridItem, useMediaQuery, IconButton, Button } from '@chakra-ui/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ChartSpline, ShoppingCart, ScanSearch, Settings, CircleArrowUp, Users, CreditCard, LogOut } from 'lucide-react'
 import { useAuth } from '@/services/AuthContext'
@@ -8,17 +8,18 @@ interface NavItem {
   name: string
   icon: React.ElementType
   path: string
+  enabled: boolean
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { name: 'Dashboard', icon: ChartSpline, path: '/inicio' },
-  { name: 'Punto de venta', icon: ShoppingCart, path: '/punto-de-venta' },
-  { name: 'Compras', icon: CreditCard, path: '/compras' },
-  { name: 'Inventario', icon: Users, path: '/inventario' },
-  { name: 'Control de Caja', icon: Users, path: '/caja' },
-  { name: 'Reportes', icon: Users, path: '/reportes' },
-  { name: 'Empleados', icon: Settings, path: '/personal' },
-  { name: 'Facturacion', icon: Settings, path: '/facturas' },
+  { name: 'Dashboard', icon: ChartSpline, path: '/inicio', enabled: false },
+  { name: 'Punto de venta', icon: ShoppingCart, path: '/punto-de-venta', enabled: true },
+  { name: 'Compras', icon: CreditCard, path: '/compras', enabled: false },
+  { name: 'Inventario', icon: Users, path: '/inventario', enabled: false },
+  { name: 'Control de Caja', icon: Users, path: '/caja', enabled: false },
+  { name: 'Reportes', icon: Users, path: '/reportes', enabled: false },
+  { name: 'Empleados', icon: Settings, path: '/personal', enabled: false },
+  { name: 'Facturacion', icon: Settings, path: '/facturas', enabled: false },
 ]
 
 const Sidebar = () => {
@@ -46,10 +47,11 @@ const Sidebar = () => {
     setIsMobileExpanded(!isMobileExpanded)
   }
 
-  const handleLogout = ()=>{
+  const handleLogout = () => {
     logout();
     navigate('/login')
   };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (mobileBarRef.current && !mobileBarRef.current.contains(event.target as Node)) {
@@ -65,7 +67,7 @@ const Sidebar = () => {
 
   const renderNavItem = (item: NavItem) => (
     <GridItem key={item.name} borderTopLeftRadius="15px">
-      <Link to={item.path} style={{ width: '100%', height: '100%', }}>
+      <Link to={item.enabled ? item.path : '#'} style={{ width: '100%', height: '100%', pointerEvents: item.enabled ? 'auto' : 'none' }}>
         <Flex
           direction="column"
           align="center"
@@ -77,14 +79,36 @@ const Sidebar = () => {
           my={4}
           borderRadius={'8px'}
           transition="all 0.3s"
-          className='hover:scale-125'
+          className={item.enabled ? 'hover:scale-125' : ''}
+          opacity={item.enabled ? 1 : 0.5}
         >
-          <Icon as={item.icon} boxSize={6} color={location.pathname === item.path ? 'blue.500' : 'black'} />
+          <Icon as={item.icon} boxSize={6} color={location.pathname === item.path && item.enabled ? 'blue.500' : 'black'} />
           <Text fontSize="xs" mt={1} textAlign="center" color="black">
             {isLargerThan768 ? (isExpanded ? item.name : '') : item.name}
           </Text>
         </Flex>
       </Link>
+    </GridItem>
+  )
+
+  const renderLogoutButton = () => (
+    <GridItem>
+      <Button
+        onClick={handleLogout}
+        variant="ghost"
+        w="100%"
+        h="100%"
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        _hover={{ bg: 'blue.100' }}
+      >
+        <Icon as={LogOut} boxSize={6} color="black" />
+        <Text fontSize="xs" mt={1} textAlign="center" color="black">
+          Cerrar Sesión
+        </Text>
+      </Button>
     </GridItem>
   )
 
@@ -115,15 +139,15 @@ const Sidebar = () => {
           opacity={isMobileExpanded ? 1 : 0}  
           transform={isMobileExpanded ? 'translateY(0)' : 'translateY(-10px)'}  
           transition="opacity 0.4s ease, transform 0.4s ease"  
-
           >
             {NAV_ITEMS.map(renderNavItem)}
+            {renderLogoutButton()}
           </Grid>
         ) : (
           <Grid templateColumns="repeat(4, 1fr)" h="60px">
             {NAV_ITEMS.slice(0, 2).map((item) => (
               <GridItem key={item.name}>
-                <Link to={item.path} style={{ width: '100%', height: '100%' }}>
+                <Link to={item.enabled ? item.path : '#'} style={{ width: '100%', height: '100%', pointerEvents: item.enabled ? 'auto' : 'none' }}>
                   <Flex
                     direction="column"
                     align="center"
@@ -131,8 +155,9 @@ const Sidebar = () => {
                     h="100%"
                     _hover={{ bg: 'blue.100' }}
                     transition="all 0.3s"
+                    opacity={item.enabled ? 1 : 0.5}
                   >
-                    <Icon as={item.icon} boxSize={6} color={location.pathname === item.path ? 'blue.500' : 'black'} />
+                    <Icon as={item.icon} boxSize={6} color={location.pathname === item.path && item.enabled ? 'blue.500' : 'black'} />
                   </Flex>
                 </Link>
               </GridItem>
@@ -186,20 +211,20 @@ const Sidebar = () => {
       overflowY="auto"
       boxShadow="2px 0 10px rgba(0, 0, 0, 0.1)"
     >
-      <Flex direction="column" h="90%" align="stretch">
+      <Flex direction="column" h="100%" align="stretch">
         {NAV_ITEMS.map(renderNavItem)}
-      </Flex>
-      <Flex
-      align='center'
-      p={2}
-      direction={'column'}
-      onClick={handleLogout}
-      _hover={{ color: 'green.100', cursor: 'pointer' }}
-        >
-        <LogOut />
-        {isExpanded?(
-          <h1>Cerrar Sesion</h1>
-        ): null}
+        <Box mt="auto">
+          <Flex
+            align='center'
+            p={2}
+            direction={'column'}
+            onClick={handleLogout}
+            _hover={{ color: 'green.100', cursor: 'pointer' }}
+          >
+            <LogOut />
+            {isExpanded && <Text mt={1}>Cerrar Sesión</Text>}
+          </Flex>
+        </Box>
       </Flex>
     </Box>
   )
