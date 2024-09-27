@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Box, Flex, Icon, Text, Grid, GridItem, useMediaQuery, IconButton, Button } from '@chakra-ui/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ChartSpline, ShoppingCart, ScanSearch, Settings, CircleArrowUp, Users, CreditCard, LogOut } from 'lucide-react'
+import { ChartSpline, ShoppingCart, ScanSearch, Settings, CircleArrowUp, Users, CreditCard, LogOut, Archive } from 'lucide-react'
 import { useAuth } from '@/services/AuthContext'
 
 interface NavItem {
@@ -14,8 +14,8 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { name: 'Dashboard', icon: ChartSpline, path: '/inicio', enabled: false },
   { name: 'Punto de venta', icon: ShoppingCart, path: '/punto-de-venta', enabled: true },
-  { name: 'Compras', icon: CreditCard, path: '/compras', enabled: false },
-  { name: 'Inventario', icon: Users, path: '/inventario', enabled: false },
+  { name: 'Resumen de Ventas', icon: CreditCard, path: '/resumen-de-ventas', enabled: true },
+  { name: 'Inventario', icon: Archive, path: '/inventario', enabled: true },
   { name: 'Control de Caja', icon: Users, path: '/caja', enabled: false },
   { name: 'Reportes', icon: Users, path: '/reportes', enabled: false },
   { name: 'Empleados', icon: Settings, path: '/personal', enabled: false },

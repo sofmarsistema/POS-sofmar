@@ -26,6 +26,7 @@ import axios from 'axios'
 import { useAuth } from '@/services/AuthContext' 
 import { api_url } from '@/utils'
 import { debounce } from 'lodash';
+import VentaModal from '../ventas/ultimaVenta'
 
 
 interface Sucursal {
@@ -34,7 +35,7 @@ interface Sucursal {
 }
 
 interface Deposito {
-  id: number
+  dep_codigo: number
   dep_descripcion: string
 }
 
@@ -90,7 +91,7 @@ export default function PuntoDeVenta() {
   const [articulos, setArticulos] = useState<Articulo[]>([])
   const [sucursal, setSucursal] = useState('')
   const [deposito, setDeposito] = useState('')
-  const [, setDepositoSeleccionado] = useState<Deposito | null>(null);
+  const [depositoSeleccionado, setDepositoSeleccionado] = useState<Deposito | null>(null);
   const [depositoId, setDepositoId] = useState<string>('');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [moneda, setMoneda] = useState('PYG')
@@ -110,7 +111,7 @@ export default function PuntoDeVenta() {
   const [descuentoValor, setDescuentoValor] = useState(0)
   const [buscarVendedor, setBuscarVendedor] = useState('')
   const [recomedacionesVendedores, setRecomendacionesVendedores] = useState<typeof vendedores>([])
-  const [ , setNewSaleID]= useState<number | null>(null)
+  const [ newSaleID, setNewSaleID]= useState<number | null>(null)
   const [, setError] =useState<string | null>(null)
   const [numeroFactura, setNumeroFactura] = useState('')
   const [buscarSoloConStock, setBuscarSoloConStock] = useState(true)
@@ -120,8 +121,12 @@ export default function PuntoDeVenta() {
   const clienteRef = useRef<HTMLInputElement>(null);
   const articuloRef = useRef<HTMLInputElement>(null);
   const cantidadRef = useRef<HTMLInputElement>(null);
-
-
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [ventaFinalizada, setVentaFinalizada] = useState<any>(null)
+  const [detalleVentaFinalizada, setDetalleVentaFinalizada] = useState<any[]>([])
+  const [clienteInfo, setClienteInfo] = useState<any>(null)
+  const [sucursalInfo, setSucursalInfo] = useState<any>(null)
+  const [vendedorInfo, setVendedorInfo] = useState<any>(null)
   // Funciones y Effects para traer los datos//
 
   useEffect(() => {
@@ -135,6 +140,7 @@ export default function PuntoDeVenta() {
       }
       try {
         const response = await axios.get(`${api_url}sucursales/listar`);
+        console.log(response.data.body)
         setSucursales(response.data.body);
         if (response.data.body.length > 0) {
           setSucursal(response.data.body[0].id.toString());
@@ -163,18 +169,12 @@ export default function PuntoDeVenta() {
         return;
       }
       try {
-        const response = await axios.get(`${api_url}depositos/sucursal/${localStorage.getItem('user_id')}`);
-        if (response.data.body.length < 1) {
-          const defaultDeposito = { id: 1, dep_descripcion: 'Casa Central' };
-          setDepositos([defaultDeposito]);
-          setDeposito('1');
-          setDepositoId('1');
-          setDepositoSeleccionado(defaultDeposito);
-        } else {
-          setDepositos(response.data.body);
+        const response = await axios.get(`${api_url}depositos/`);
+        setDepositos(response.data.body);
+        if (response.data.body.length > 0) {
           const primerDeposito = response.data.body[0];
-          setDeposito(primerDeposito.id.toString());
-          setDepositoId(primerDeposito.id.toString());
+          setDeposito(primerDeposito.dep_codigo.toString());
+          setDepositoId(primerDeposito.dep_codigo.toString());
           setDepositoSeleccionado(primerDeposito);
         }
       } catch (err) {
@@ -443,7 +443,7 @@ export default function PuntoDeVenta() {
   const handleDepositoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     setDepositoId(id);
-    const deposito = depositos.find(d => d.id.toString() === id) || null;
+    const deposito = depositos.find(d => d.dep_codigo.toString() === id) || null;
     setDepositoSeleccionado(deposito);
   };
 
@@ -575,6 +575,55 @@ export default function PuntoDeVenta() {
       };
     })
   };
+  
+  const localVentaData = {
+    venta: {
+      ve_cliente: clienteSeleccionado?.cli_codigo,
+      ve_operador: operador ? parseInt(operador) : 1,
+      ve_deposito: depositoSeleccionado?.dep_descripcion,
+      ve_moneda: moneda === 'PYG'? 1: 0,
+      ve_fecha: fecha,
+      ve_factura: numeroFactura,
+      ve_credito: condicionVenta,
+      ve_saldo: clienteSeleccionado?.cli_limitecredito,
+      ve_sucursal: parseInt(sucursal),
+      ve_total: calcularTotal(),
+      ve_vencimiento: selectedItem?.al_vencimiento.substring(0,10) ? selectedItem.al_vencimiento : '2001-01-01',
+      ve_descuento: descuentoTipo === 'porcentaje'
+        ? items.reduce((acc, item) => acc + item.subtotal, 0) * (descuentoValor / 100)
+        : descuentoValor,
+      ve_vendedor: operador ? parseInt(operador): 1,
+      ve_hora: horaLocal
+    },
+    detalle_ventas: items.map(item => {
+      const itemSubtotal = item.precioUnitario * item.cantidad;
+      const totalSubtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
+      let itemDescuento = 0;
+  
+      if (descuentoTipo === 'porcentaje') {
+        itemDescuento = itemSubtotal * (descuentoValor / 100);
+      } else {
+        // Distribuir el descuento proporcionalmente
+        itemDescuento = (itemSubtotal / totalSubtotal) * descuentoValor;
+      }
+      const deve_exentas = Math.max(item.exentas * item.cantidad - itemDescuento, 0);
+      const deve_cinco = Math.max(item.impuesto5 * item.cantidad - itemDescuento, 0);
+      const deve_diez = Math.max(item.impuesto10 * item.cantidad - itemDescuento, 0);
+  
+      return {
+        deve_articulo: item.id,
+        deve_descripcion: item.nombre,
+        deve_cantidad: item.cantidad,
+        deve_precio: item.precioUnitario,
+        deve_descuento: itemDescuento,
+        deve_exentas:deve_exentas,
+        deve_cinco: deve_cinco,
+        deve_diez: deve_diez,
+        deve_vendedor: operador ? parseInt(operador) : 1
+      };
+    })
+  };
+
 
   const finalizarVenta = async () => {
     if (!clienteSeleccionado) {
@@ -644,7 +693,14 @@ export default function PuntoDeVenta() {
       
       if (response.data && response.data.body) {
         setNewSaleID(response.data.body);
-  
+        console.log(newSaleID)
+        
+        setVentaFinalizada(localVentaData.venta)
+        setDetalleVentaFinalizada(localVentaData.detalle_ventas)
+        setClienteInfo(clienteSeleccionado)
+        setSucursalInfo(sucursales.find(s => s.id.toString() === sucursal))
+        setVendedorInfo(vendedores.find(v => v.op_codigo === operador))
+        setIsModalOpen(true)
         setItems([]);
         saveItemsToLocalStorage([]); // Limpiar el localStorage
         setClienteSeleccionado(null);
@@ -759,6 +815,16 @@ export default function PuntoDeVenta() {
         );
       };
 
+      const handleCloseModal = () => {
+        setIsModalOpen(false)
+        setVentaFinalizada(null)
+        setDetalleVentaFinalizada([])
+        setClienteInfo(null)
+        setSucursalInfo(null)
+        setVendedorInfo(null)
+      }
+      
+
   return (
     <div>
           <ChakraProvider>
@@ -783,8 +849,8 @@ export default function PuntoDeVenta() {
                   <Box>
                     <FormLabel>Depósito</FormLabel>
                     <Select placeholder="Seleccionar depósito" value={depositoId} onChange={handleDepositoChange}>
-                    {depositos.map((dep) => (
-                        <option key={dep.id} value={dep.id.toString()}>{dep.dep_descripcion}</option>
+                    {depositos.map((deposito) => (
+                        <option key={deposito.dep_codigo} value={deposito.dep_codigo.toString()}>{deposito.dep_descripcion}</option>
                       ))}
                     </Select>
                   </Box>
@@ -1153,6 +1219,17 @@ export default function PuntoDeVenta() {
               </Flex>
               </Flex>
             </Box>
+                <VentaModal
+                  isOpen={isModalOpen}
+                  onClose={handleCloseModal}
+                  venta={ventaFinalizada}
+                  detalleVentas={detalleVentaFinalizada}
+                  formatCurrency={formatCurrency}
+                  clienteInfo={clienteInfo}
+                  sucursalInfo={sucursalInfo}
+                  vendedorInfo={vendedorInfo}
+                  newSaleID={newSaleID}
+            />
           </ChakraProvider>
     </div>
   

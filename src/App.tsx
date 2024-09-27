@@ -5,6 +5,9 @@ import Login from './views/login/Login';
 import PuntoDeVenta from './views/puntodeventa/punto_de_venta';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import Sidebar from './views/modules/NavBar';
+import ResumenVentas from './views/ventas/ResumenVentas';
+import GestionInventario from './views/inventario/gestionInventario';
+
 
 const ProtectedLayout: React.FC = () => {
   const { auth, isLoading } = useAuth();
@@ -46,7 +49,8 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedLayout />}>
               <Route path="/punto-de-venta" element={<PuntoDeVenta />} />
-              {/* Agrega aquí más rutas protegidas si es necesario */}
+              <Route path="/resumen-de-ventas" element={<ResumenVentas />} />
+              <Route path="/inventario" element={<GestionInventario/>} />
             </Route>
             <Route path="/" element={<Navigate to="/punto-de-venta" replace />} />
           </Routes>
