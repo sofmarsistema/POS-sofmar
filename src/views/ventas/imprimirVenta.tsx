@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import  { useState, useEffect } from 'react'
 import axios from 'axios'
 import {
   Modal,
@@ -26,14 +26,38 @@ const ReceiptWrapper = styled.pre`
   width: 100%;
 `
 
-const ReceiptLine = styled.div`
-  display: flex;
-  justify-content: space-between;
+const ReceiptTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
 `
 
-const ReceiptDivider = styled.div`
+const ReceiptRow = styled.tr`
+  &:nth-of-type(even) {
+    background-color: #f9f9f9;
+  }
+`
+
+const ReceiptCell = styled.td`
+  padding: 4px;
+  text-align: left;
+  &.right {
+    text-align: right;
+  }
+`
+
+const ReceiptHeader = styled.th`
+  padding: 4px;
+  text-align: left;
+  font-weight: bold;
+  &.right {
+    text-align: right;
+  }
+`
+
+const ReceiptDivider = styled.hr`
+  border: none;
   border-top: 1px dotted #000;
-  margin: 15px 0px;
+  margin: 8px 0;
 `
 
 interface VentaModalProps {
@@ -81,8 +105,10 @@ interface Sucursal {
   id: number
   descripcion: string
   ciudad: string
-  telefono: string
+  tel: string
+  nombre_emp: string
 }
+
 interface Deposito {
   dep_codigo: number
   dep_descripcion: string
@@ -113,104 +139,83 @@ export default function VentaModal({ isOpen, onClose, ventaId }: VentaModalProps
 
   const fetchVentaData = async () => {
     if (!ventaId) {
-      console.error("Venta ID no proporcionado");
-      return;
+      console.error("Venta ID no proporcionado")
+      return
     }
   
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       const [ventaResponse, detalleResponse] = await Promise.all([
         axios.get(`${api_url}venta`, { params: { id: ventaId } }),
         axios.get(`${api_url}venta/detalles?cod=${ventaId}`)
-      ]);
+      ])
   
-      const [ventaData] = ventaResponse.data.body;
-      const detalles = detalleResponse.data.body;
+      const [ventaData] = ventaResponse.data.body
+      const detalles = detalleResponse.data.body
       
-      console.log(ventaData); // Verificar la estructura completa de ventaData
-      console.log(detalles); // Verificar la estructura de detalleResponse
-  
-      setVenta(ventaData);
-      setDetalleVentas(detalles); // Esto debería mostrar el valor esperado si ve_cliente está presente en 
+      setVenta(ventaData)
+      setDetalleVentas(detalles)
   
       await Promise.all([
         fetchClienteInfo(ventaData.ve_cliente),
         fetchSucursalInfo(),
         fetchDepositoInfo(),
         fetchVendedorInfo(ventaData.ve_vendedor)
-      ]);
+      ])
     } catch (error) {
-      console.error("Error fetching venta data", error);
+      console.error("Error fetching venta data", error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
   
   const fetchClienteInfo = async (clienteId: number) => {
     try {
-      const response = await axios.get(`${api_url}clientes/${clienteId}`);
-      
-      // Verificamos que el cuerpo de la respuesta sea un array y que tenga al menos un elemento
+      const response = await axios.get(`${api_url}clientes/${clienteId}`)
       const clienteData = Array.isArray(response.data.body) && response.data.body.length > 0
-        ? response.data.body[0] // Accedemos al primer objeto
-        : null; // Manejo de caso si no hay datos
-  
-      setClienteInfo(clienteData);
-      console.log(clienteData); // Log para verificar el contenido
+        ? response.data.body[0]
+        : null
+      setClienteInfo(clienteData)
     } catch (error) {
-      console.error("Error fetching cliente info", error);
+      console.error("Error fetching cliente info", error)
     }
-  };
+  }
   
   const fetchSucursalInfo = async () => {
     try {
-      const response = await axios.get(`${api_url}sucursales/listar`);
-  
-      // Verificamos que el cuerpo de la respuesta sea un array y que tenga al menos un elemento
+      const response = await axios.get(`${api_url}sucursales/listar`)
       const sucursalData = Array.isArray(response.data.body) && response.data.body.length > 0
-        ? response.data.body[0] // Accedemos al primer objeto
-        : null; // Manejo de caso si no hay datos
-  
-      setSucursalInfo(sucursalData); // Establecemos solo un objeto o null
-      console.log(sucursalData); // Log para verificar el contenido
+        ? response.data.body[0]
+        : null
+      setSucursalInfo(sucursalData)
     } catch (error) {
-      console.error("Error fetching sucursal info", error);
+      console.error("Error fetching sucursal info", error)
     }
-  };
+  }
 
-
-    const fetchDepositoInfo = async () => {
+  const fetchDepositoInfo = async () => {
     try {
-      const response = await axios.get(`${api_url}depositos`);
-  
-      // Verificamos que el cuerpo de la respuesta sea un array y que tenga al menos un elemento
+      const response = await axios.get(`${api_url}depositos`)
       const depositoData = Array.isArray(response.data.body) && response.data.body.length > 0
-        ? response.data.body[0] // Accedemos al primer objeto
-        : null; // Manejo de caso si no hay datos
-  
-      setDepositoInfo(depositoData); // Establecemos solo un objeto o null
-      console.log(depositoData); // Log para verificar el contenido
+        ? response.data.body[0]
+        : null
+      setDepositoInfo(depositoData)
     } catch (error) {
-      console.error("Error fetching sucursal info", error);
+      console.error("Error fetching deposito info", error)
     }
-  };
+  }
 
   const fetchVendedorInfo = async (vendedorId: number) => {
     try {
-      const response = await axios.get(`${api_url}usuarios/${vendedorId}`);
-      
-      // Verificamos que el cuerpo de la respuesta sea un array y que tenga al menos un elemento
+      const response = await axios.get(`${api_url}usuarios/${vendedorId}`)
       const vendedorData = Array.isArray(response.data.body) && response.data.body.length > 0
-        ? response.data.body[0] // Accedemos al primer objeto
-        : null; // Manejo de caso si no hay datos
-  
-      setVendedorInfo(vendedorData); // Establecemos solo un objeto o null
-      console.log(vendedorData); // Log para verificar el contenido
+        ? response.data.body[0]
+        : null
+      setVendedorInfo(vendedorData)
     } catch (error) {
-      console.error("Error fetching vendedor info", error);
+      console.error("Error fetching vendedor info", error)
     }
-  };
-  
+  }
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleString('es-PY', {
@@ -222,22 +227,22 @@ export default function VentaModal({ isOpen, onClose, ventaId }: VentaModalProps
 
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('es-PY', {
-        style: 'currency',
-        currency: venta?.ve_moneda === 1 ? 'PYG' : 'USD',
-        minimumFractionDigits: venta?.ve_moneda === 1 ? 0 : 2,
-        maximumFractionDigits: venta?.ve_moneda === 1 ? 0 : 2,
-    }).format(amount);
-};
+      style: 'currency',
+      currency: venta?.ve_moneda === 1 ? 'PYG' : 'USD',
+      minimumFractionDigits: venta?.ve_moneda === 1 ? 0 : 2,
+      maximumFractionDigits: venta?.ve_moneda === 1 ? 0 : 2,
+    }).format(amount)
+  }
 
-const calcularVentaSinDescuento = (total: number, descuento: number): number => {
-    return total + descuento;
-};
+  const calcularVentaSinDescuento = (total: number, descuento: number): number => {
+    return total + descuento
+  }
 
-// Asegúrate de que los valores sean números, usando 0 si son undefined
-const totalSinDescuento = calcularVentaSinDescuento(
-    Number(venta?.ve_total ?? 0),  // Convierte a número, usa 0 si es undefined
-    Number(venta?.ve_descuento ?? 0) // Convierte a número, usa 0 si es undefined
-);
+  const totalSinDescuento = calcularVentaSinDescuento(
+    Number(venta?.ve_total ?? 0),
+    Number(venta?.ve_descuento ?? 0)
+  )
+
   const safeString = (value: any): string => {
     return typeof value === 'string' ? value : String(value || '')
   }
@@ -266,79 +271,89 @@ const totalSinDescuento = calcularVentaSinDescuento(
         <ModalBody p={8} ref={targetRef}>
           <ReceiptWrapper>
             <Box textAlign="center" mb={2}>
-              <Text fontWeight="bold">Acricolor</Text>
+              <Text fontWeight="bold">{safeString(sucursalInfo.nombre_emp)}</Text>
               <Text>Filial: {safeString(sucursalInfo.descripcion)}</Text>
-              <Text>Ciudad: {safeString(sucursalInfo.ciudad)}</Text>
-              <Text>Telef.: {safeString(sucursalInfo.telefono)}</Text>
+              <Text>Ciudad: Ciudad del Este</Text>
+              <Text>Telef.: {safeString(sucursalInfo.tel)}</Text>
             </Box>
             <ReceiptDivider />
-            <ReceiptLine>
-              <Text>VENTA: {safeString(venta.ve_credito === 1 ? 'Credito' : 'Contado')}</Text>
-              <Text>CONTROL INTERNO</Text>
-            </ReceiptLine>
-            <ReceiptLine>
-              <Text>Fecha..: {`${formatDate(venta.fecha)} : ${venta.ve_hora}`}</Text>
-              <Text>Sucursal.: {safeString(sucursalInfo.descripcion)}</Text>
-            </ReceiptLine>
-            <ReceiptLine>
-              <Text>Moneda.: {venta.ve_moneda === 1 ? 'GUARANI' : 'USD'}</Text>
-              <Text>Depósito.: {safeString(depositoInfo?.dep_descripcion)}</Text>
-            </ReceiptLine>
-            <ReceiptLine>
-              <Text>Cliente: {safeString(clienteInfo.cli_razon)}</Text>
-              <Text>Registro.: {safeString(venta.ve_codigo)}</Text>
-            </ReceiptLine>
-            <ReceiptLine>
-              <Text>RUC: {safeString(clienteInfo.cli_ruc)}</Text>
-              <Text>Vendedor.: {safeString(vendedorInfo.op_nombre)}</Text>
-            </ReceiptLine>
-            <ReceiptLine>
-              <Text>Teléfono.: {safeString(clienteInfo.cli_tel)}</Text>
-              <Text>Ciudad..: Ciudad del Este</Text>
-            </ReceiptLine>
+            <ReceiptTable>
+              <tbody>
+                <ReceiptRow>
+                  <ReceiptCell>VENTA: {safeString(venta.ve_credito === 1 ? 'Credito' : 'Contado')}</ReceiptCell>
+                  <ReceiptCell className="right">CONTROL INTERNO</ReceiptCell>
+                </ReceiptRow>
+                <ReceiptRow>
+                  <ReceiptCell>Fecha..: {`${formatDate(venta.fecha)} : ${venta.ve_hora}`}</ReceiptCell>
+                  <ReceiptCell className="right">Sucursal.: {safeString(sucursalInfo.descripcion)}</ReceiptCell>
+                </ReceiptRow>
+                <ReceiptRow>
+                  <ReceiptCell>Moneda.: {venta.ve_moneda === 1 ? 'GUARANI' : 'USD'}</ReceiptCell>
+                  <ReceiptCell className="right">Depósito.: {safeString(depositoInfo?.dep_descripcion)}</ReceiptCell>
+                </ReceiptRow>
+                <ReceiptRow>
+                  <ReceiptCell>Cliente: {safeString(clienteInfo.cli_razon)}</ReceiptCell>
+                  <ReceiptCell className="right">Registro.: {safeString(venta.ve_codigo)}</ReceiptCell>
+                </ReceiptRow>
+                <ReceiptRow>
+                  <ReceiptCell>RUC: {safeString(clienteInfo.cli_ruc)}</ReceiptCell>
+                  <ReceiptCell className="right">Vendedor.: {safeString(vendedorInfo.op_nombre)}</ReceiptCell>
+                </ReceiptRow>
+                <ReceiptRow>
+                  <ReceiptCell>Teléfono.: {safeString(clienteInfo.cli_tel)}</ReceiptCell>
+                  <ReceiptCell className="right">Ciudad..: Ciudad del Este</ReceiptCell>
+                </ReceiptRow>
+              </tbody>
+            </ReceiptTable>
             <ReceiptDivider />
-            <ReceiptLine>
-              <Text>{'Cód'.padEnd(6)}</Text>
-              <Text>{'Descripción'.padEnd(20)}</Text>
-              <Text>{'Cant'.padStart(5)}</Text>
-              <Text>{'Precio U.'.padStart(10)}</Text>
-              <Text>{'Desc.'.padStart(10)}</Text>
-              <Text>{'Valor'.padStart(10)}</Text>
-            </ReceiptLine>
+            <ReceiptTable>
+              <thead>
+                <ReceiptRow>
+                  <ReceiptHeader>Cód</ReceiptHeader>
+                  <ReceiptHeader>Descripción</ReceiptHeader>
+                  <ReceiptHeader className="right">Cant</ReceiptHeader>
+                  <ReceiptHeader className="right">Precio U.</ReceiptHeader>
+                  <ReceiptHeader className="right">Desc.</ReceiptHeader>
+                  <ReceiptHeader className="right">Valor</ReceiptHeader>
+                </ReceiptRow>
+              </thead>
+              <tbody>
+                {detalleVentas.map((detalle, index) => (
+                  <ReceiptRow key={index}>
+                    <ReceiptCell>{safeString(detalle.codbarra)}</ReceiptCell>
+                    <ReceiptCell>{safeString(detalle.descripcion)}</ReceiptCell>
+                    <ReceiptCell className="right">{safeString(detalle.cantidad)}</ReceiptCell>
+                    <ReceiptCell className="right">{formatCurrency(detalle.precio)}</ReceiptCell>
+                    <ReceiptCell className="right">{formatCurrency(detalle.descuento)}</ReceiptCell>
+                    <ReceiptCell className="right">{formatCurrency(detalle.cantidad * detalle.precio - detalle.descuento)}</ReceiptCell>
+                  </ReceiptRow>
+                ))}
+              </tbody>
+            </ReceiptTable>
             <ReceiptDivider />
-            {detalleVentas.map((detalle, index) => (
-              <ReceiptLine key={index}>
-                <Text>{safeString(detalle.codbarra).padEnd(6)}</Text>
-                <Text>{safeString(detalle.descripcion).padEnd(20)}</Text>
-                <Text>{safeString(detalle.cantidad).padStart(5)}</Text>
-                <Text>{formatCurrency(detalle.precio).padStart(10)}</Text>
-                <Text>{formatCurrency(detalle.descuento).padStart(10)}</Text>
-                <Text>{formatCurrency(detalle.cantidad * detalle.precio - detalle.descuento).padStart(10)}</Text>
-              </ReceiptLine>
-            ))}
-            <ReceiptDivider />
-            <ReceiptLine>
-              <Text>Total Items: {detalleVentas.length}</Text>
-              <Text>Total s/Desc.: {formatCurrency(totalSinDescuento)}</Text>
-              <Text>Subtotal c/Desc.: {formatCurrency(venta.ve_total)}</Text>
-            </ReceiptLine>
-            <ReceiptLine>
-              <Text></Text>
-              <Text></Text>
-              <Text>Descuento: {formatCurrency(venta.ve_descuento)}</Text>
-            </ReceiptLine>
-            <ReceiptLine>
-              <Text></Text>
-              <Text></Text>
-              <Text>Total: {formatCurrency(venta.ve_total)}</Text>
-            </ReceiptLine>
+            <ReceiptTable>
+              <tbody>
+                <ReceiptRow>
+                  <ReceiptCell>Total Items: {detalleVentas.length}</ReceiptCell>
+                  <ReceiptCell className="right">Total s/Desc.: {formatCurrency(totalSinDescuento)}</ReceiptCell>
+                </ReceiptRow>
+                <ReceiptRow>
+                  <ReceiptCell></ReceiptCell>
+                  <ReceiptCell className="right">Descuento: {formatCurrency(venta.ve_descuento)}</ReceiptCell>
+                </ReceiptRow>
+                <ReceiptRow>
+                  <ReceiptCell></ReceiptCell>
+                  <ReceiptCell className="right">Total: {formatCurrency(venta.ve_total)}</ReceiptCell>
+                </ReceiptRow>
+              </tbody>
+            </ReceiptTable>
             <ReceiptDivider />
             <Text>{'<<Pasados los 30 Ds. no se aceptarán devoluciones>>'}</Text>
             <Text>{'<<Gracias por su preferencia>>'}</Text>
             <Text>{'<<Comprobante no válido como nota fiscal>>'}</Text>
-            <ReceiptLine>
+            <Box mt={4}>
               <Text>Firma: _________________</Text>
-            </ReceiptLine>
+            </Box>
           </ReceiptWrapper>
         </ModalBody>
         <ModalFooter>

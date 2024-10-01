@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './services/AuthContext';
 import Sidebar from './views/modules/NavBar';
 import ResumenVentas from './views/ventas/ResumenVentas';
 import GestionInventario from './views/inventario/gestionInventario';
+import VentasDashboard from './views/dashboards/SalesDashboard';
 
 
 const ProtectedLayout: React.FC = () => {
@@ -51,6 +52,7 @@ function App() {
               <Route path="/punto-de-venta" element={<PuntoDeVenta />} />
               <Route path="/resumen-de-ventas" element={<ResumenVentas />} />
               <Route path="/inventario" element={<GestionInventario/>} />
+              <Route path="/dashboard" element={<VentasDashboard/>} />
             </Route>
             <Route path="/" element={<Navigate to="/punto-de-venta" replace />} />
           </Routes>

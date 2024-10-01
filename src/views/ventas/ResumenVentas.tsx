@@ -25,7 +25,7 @@ import {
 } from '@chakra-ui/react'
 import { format, subDays, startOfWeek, startOfMonth } from 'date-fns'
 import { api_url } from '@/utils'
-import { SearchIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons'
+import { SearchIcon } from '@chakra-ui/icons'
 import { HandCoins, Printer } from 'lucide-react'
 import VentaModal from './imprimirVenta'
 
@@ -83,7 +83,7 @@ export default function ResumenVentas() {
   const [facturaFiltro, setFacturaFiltro] = useState('')
   const [detalleVenta, setDetalleVenta] = useState<DetalleVenta[]>([])
   const [ventaSeleccionada, setVentaSeleccionada] = useState<number | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [, setIsLoading] = useState(false)
   const toast = useToast()
   const [isMobile] = useMediaQuery('(max-width: 48em)')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -268,95 +268,93 @@ export default function ResumenVentas() {
           </TabList>
         </Tabs>
 
-          <Box height={'600px'} overflowY={'auto'} width={'90vw'}  >
-            <Table variant="simple">
-              <Thead> 
-                <Tr>
-                  <Th>Codigo</Th>
-                  <Th>Fecha</Th>
-                  <Th>Cliente</Th>
-                  <Th>Vendedor</Th>
-                  <Th>Operador</Th>
-                  <Th>Factura</Th>
-                  <Th>Condicion</Th>
-                  <Th>Moneda</Th>
-                  <Th>Saldo</Th>
-                  <Th>Descuento</Th>
-                  <Th>Total</Th>
-                  <Th>Estado</Th>
-                  <Th></Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {filteredVentas.map((venta) => (
-                  <React.Fragment key={venta.codigo}>
-                    <Tr>
-                      
-                      <Td>{venta.codigo}</Td>
-                      <Td>{format(new Date(venta.fecha.split(' : ')[0]), 'dd/MM/yyyy')}</Td>
-                      <Td>{venta.cliente}</Td>
-                      <Td>{venta.vendedor}</Td>
-                      <Td>{venta.operador}</Td>
-                      <Td>{venta.factura}</Td>
-                      <Td>{venta.condicion}</Td>
-                      <Td>{venta.moneda}</Td>
-                      <Td>{venta.saldo}</Td>
-                      <Td>{formatNumber(venta.descuento)}</Td>
-                      <Td>{formatNumber(venta.total)}</Td>
-                      <Td>{venta.estado_desc}</Td>
-                      <Td>
-                        <Button
-                          size="md"
-                          onClick={() => handleVentaClick(venta.codigo)}
-                          rightIcon={ventaSeleccionada === venta.codigo ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                          colorScheme={ventaSeleccionada=== venta.codigo? 'yellow': 'green'}
-                        >
-                          {ventaSeleccionada === venta.codigo ? 'Ocultar' : 'Detalles'}
-                        </Button>
-                      </Td>
-                    </Tr>
-                    <Tr>
-                      <Td colSpan={12}>
-                        <Collapse in={ventaSeleccionada === venta.codigo}>
-                          <Box p={4} bg="gray.100" rounded="md">
-                            <Heading size="sm" mb={2}>Detalle de la Venta</Heading>
-                            <Table size="sm" variant="striped" py={4}>
-                              <Thead bg={'blue.200'} >
-                                <Tr>
-                                  <Th>Código</Th>
-                                  <Th>Descripción</Th>
-                                  <Th>Cantidad</Th>
-                                  <Th>Precio</Th>
-                                  <Th>Descuento</Th>
-                                  <Th>Subtotal</Th>
-                                </Tr>
-                              </Thead>
-                              <Tbody bg={'white'}>
-                                {detalleVenta.map((detalle) => (
-                                  <Tr key={detalle.det_codigo}>
-                                    <Td>{detalle.art_codigo}</Td>
-                                    <Td>{detalle.descripcion}</Td>
-                                    <Td>{detalle.cantidad}</Td>
-                                    <Td>{formatNumber(detalle.precio)}</Td>
-                                    <Td>{formatNumber(detalle.descuento)}</Td>
-                                    <Td>{formatNumber(detalle.precio * detalle.cantidad - detalle.descuento)}</Td>
-                                  </Tr>
-                                ))}
-                              </Tbody>
-                            </Table>
-                            <Flex flexDirection={'row'} justify={'end'} gap={4} width={'full'} my={4}>
-                              <Button colorScheme='red'>Anular</Button>
-                              <Button colorScheme='blue' onClick={handleModal}><Printer/></Button>
-                            </Flex>
-                          </Box>
-                        </Collapse>
-                      </Td>
-                    </Tr>
-                  </React.Fragment>
-                ))}
-              </Tbody>
-            </Table>
-          </Box>
+        <Box height={'600px'} overflowY={'auto'} width={'90vw'}>
+  <Table variant="simple">
+    <Thead bg={'blue.100'}>
+      <Tr>
+        <Th>Codigo</Th>
+        <Th>Fecha</Th>
+        <Th>Cliente</Th>
+        <Th>Vendedor</Th>
+        <Th>Operador</Th>
+        <Th>Factura</Th>
+        <Th>Condicion</Th>
+        <Th>Moneda</Th>
+        <Th textAlign="right">Saldo</Th>
+        <Th textAlign="right">Descuento</Th>
+        <Th textAlign="right">Total</Th>
+        <Th>Estado</Th>
+        <Th></Th>
+      </Tr>
+    </Thead>
+    <Tbody>
+      {filteredVentas.map((venta) => (
+        <React.Fragment key={venta.codigo}>
+          <Tr bg={venta.estado_desc.toLowerCase() === 'anulado' ? 'purple.100' : undefined}>
+            <Td>{venta.codigo}</Td>
+            <Td>{format(new Date(venta.fecha.split(' : ')[0]), 'dd/MM/yyyy')}</Td>
+            <Td>{venta.cliente}</Td>
+            <Td>{venta.vendedor}</Td>
+            <Td>{venta.operador}</Td>
+            <Td>{venta.factura}</Td>
+            <Td>{venta.condicion}</Td>
+            <Td>{venta.moneda}</Td>
+            <Td textAlign="right">{venta.saldo}</Td>
+            <Td textAlign="right">{formatNumber(venta.descuento)}</Td>
+            <Td textAlign="right">{formatNumber(venta.total)}</Td>
+            <Td>{venta.estado_desc}</Td>
+            <Td>
+              <Button
+                size="md"
+                onClick={() => handleVentaClick(venta.codigo)}
+                colorScheme={ventaSeleccionada === venta.codigo ? 'yellow' : 'green'}
+              >
+                {ventaSeleccionada === venta.codigo ? '-' : '+'}
+              </Button>
+            </Td>
+          </Tr>
+          <Tr style={{ padding: 0, margin: 0, height: '0px' }}>
+            <Td colSpan={12} style={{ padding: 0, margin: 0 }}>
+              <Collapse in={ventaSeleccionada === venta.codigo}>
+                <Box p={4} bg="gray.100" rounded="md">
+                  <Heading size="sm" mb={2}>Detalle de la Venta</Heading>
+                  <Table size="sm" variant="striped" py={4}>
+                    <Thead bg={'blue.200'}>
+                      <Tr>
+                        <Th>Código</Th>
+                        <Th>Descripción</Th>
+                        <Th>Cantidad</Th>
+                        <Th textAlign="right">Precio</Th>
+                        <Th textAlign="right">Descuento</Th>
+                        <Th textAlign="right">Subtotal</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody bg={'white'}>
+                      {detalleVenta.map((detalle) => (
+                        <Tr key={detalle.det_codigo}>
+                          <Td>{detalle.art_codigo}</Td>
+                          <Td>{detalle.descripcion}</Td>
+                          <Td>{detalle.cantidad}</Td>
+                          <Td textAlign="right">{formatNumber(detalle.precio)}</Td>
+                          <Td textAlign="right">{formatNumber(detalle.descuento)}</Td>
+                          <Td textAlign="right">{formatNumber(detalle.precio * detalle.cantidad - detalle.descuento)}</Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                  <Flex flexDirection={'row'} justify={'end'} gap={4} width={'full'} my={4}>
+                    <Button colorScheme='blue' onClick={handleModal}><Printer/></Button>
+                  </Flex>
+                </Box>
+              </Collapse>
+            </Td>
+          </Tr>
+        </React.Fragment>
+      ))}
+    </Tbody>
+  </Table>
+</Box>
+
       </VStack>
       <VentaModal
               isOpen={isModalOpen}

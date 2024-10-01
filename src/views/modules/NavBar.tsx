@@ -12,7 +12,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { name: 'Dashboard', icon: ChartSpline, path: '/inicio', enabled: false },
+  { name: 'Dashboard', icon: ChartSpline, path: '/dashboard', enabled: true },
   { name: 'Punto de venta', icon: ShoppingCart, path: '/punto-de-venta', enabled: true },
   { name: 'Resumen de Ventas', icon: CreditCard, path: '/resumen-de-ventas', enabled: true },
   { name: 'Inventario', icon: Archive, path: '/inventario', enabled: true },

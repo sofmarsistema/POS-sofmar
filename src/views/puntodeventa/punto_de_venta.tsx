@@ -103,7 +103,7 @@ export default function PuntoDeVenta() {
   const [cantidad, setCantidad] = useState(1)
   const [items, setItems] = useState<{ id: number, nombre: string, precioUnitario: number, cantidad: number, subtotal: number, impuesto:number, impuesto5:number, impuesto10:number,exentas:number, precioOriginal: number}[]>(loadItemsFromLocalStorage());  const [selectedItem, setSelectedItem] = useState<typeof articulos[0] | null>(null)
   const [condicionVenta, setCondicionVenta] = useState(0)
-  const [notaFiscal, setNotaFiscal] = useState(0)
+  const [notaFiscal, setNotaFiscal] = useState(1)
   const [isMobile] = useMediaQuery('(max-width: 48em)')
   const [recomendaciones, setRecomendaciones] = useState<typeof articulos>([])
   const [recomendacionesClientes, setRecomendacionesClientes] = useState<typeof clientes>([])

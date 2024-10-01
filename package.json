@@ -16,18 +16,22 @@
     "@emotion/styled": "^11.13.0",
     "@vitejs/plugin-react": "^4.3.1",
     "axios": "^1.7.7",
+    "chart.js": "^4.4.4",
     "date-fns": "^4.1.0",
     "jwt-decode": "^4.0.0",
     "lightweight-charts": "^4.2.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.438.0",
     "react": "^18.3.1",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
-    "react-to-pdf": "^1.0.1"
+    "react-to-pdf": "^1.0.1",
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
+    "@tailwindcss/forms": "^0.5.9",
     "@types/node": "^22.5.4",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
