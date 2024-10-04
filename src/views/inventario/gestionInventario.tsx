@@ -11,7 +11,7 @@ import axios from 'axios'
 import { debounce } from 'lodash'
 
 interface Articulo {
-  al_codigo: number
+  ar_codigo: number
   ar_descripcion: string
   ar_pvg: number
   ar_pvcredito: number
@@ -21,7 +21,7 @@ interface Articulo {
   al_cantidad: number
   al_vencimiento: string
   ar_stkmin: number
-  al_lote: string
+  al_codigo: string
   dep_descripcion: string
   pro_razon: string
   ma_descripcion: string
@@ -94,8 +94,11 @@ const GestionInventario: React.FC = () => {
             stock: filtroStock === 'todos' ? undefined :filtroStock  // Enviamos el filtro de stock según lo que el usuario seleccione
           }
         })
+        setAllArticulos([])
         setAllArticulos(response.data.body)
         setArticulos(response.data.body)
+        console.log(response.data.body)
+
       } catch (error) {
         console.error('Error al buscar artículos iniciales:', error)
         toast({
@@ -131,6 +134,8 @@ const GestionInventario: React.FC = () => {
           stock: filtroStock === 'todos' ? undefined: filtroStock
         }
       })
+      setArticulos([])
+      setAllArticulos(response.data.body)
       setArticulos(response.data.body)
       console.log(response.data.body)
     } catch (error) {
@@ -171,6 +176,8 @@ const GestionInventario: React.FC = () => {
   }
 
   const handleStockRadioChange = (value: string) => {
+    setAllArticulos([])
+    setArticulos([])
     setFiltroStock(value)
   }
   const formatCurrency = (amount: number) => {
@@ -250,7 +257,7 @@ const GestionInventario: React.FC = () => {
           {articulos.map((articulo) => (
             <Tr key={articulo.ar_codbarra}>
               <Td width="10%">{articulo.ar_codbarra}</Td>
-              <Td width="5%">{articulo.al_codigo}</Td>
+              <Td width="5%">{articulo.ar_codigo}</Td>
               <Td width="15%">{articulo.ar_descripcion}</Td>
               <Td width="15%" textAlign="right">{formatCurrency(articulo.ar_pcg)}</Td>
               <Td width="15%" textAlign="right">{formatCurrency(articulo.ar_pcg)}</Td>
@@ -258,7 +265,7 @@ const GestionInventario: React.FC = () => {
               <Td width="10%">{articulo.pro_razon}</Td>
               <Td width="10%">{articulo.al_cantidad}</Td>
               <Td width="10%">{articulo.dep_descripcion}</Td>
-              <Td width="10%">{articulo.al_lote}</Td>
+              <Td width="10%">{articulo.al_codigo}</Td>
               <Td width="10%">{articulo.um_descripcion}</Td>
               <Td width="10%">{articulo.ma_descripcion}</Td>
               <Td width="10%">{articulo.sc_descripcion}</Td>

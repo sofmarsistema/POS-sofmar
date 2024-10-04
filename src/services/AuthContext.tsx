@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       userName: data.usuario[0].op_nombre,
       userSuc: data.usuario[0].op_sucursal,
     };
-
+    console.log(authData.token)
     localStorage.setItem('token', authData.token);
     localStorage.setItem('user_id', authData.userId);
     localStorage.setItem('user_name', authData.userName);

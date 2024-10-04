@@ -16,7 +16,7 @@ import {
   HStack,
   Select,
 } from '@chakra-ui/react'
-import { format, subDays, startOfWeek, startOfMonth, parseISO, startOfYear, endOfYear } from 'date-fns'
+import { format, subDays, startOfWeek, startOfMonth, startOfYear, endOfYear } from 'date-fns'
 import { api_url } from '@/utils'
 import { ChartLine, HandCoins } from 'lucide-react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -56,7 +56,7 @@ export default function VentasChart() {
   const [fechaDesde, setFechaDesde] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [fechaHasta, setFechaHasta] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
+  const [, setIsLoading] = useState(false)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const toast = useToast()
   const [isMobile] = useMediaQuery('(max-width: 48em)')

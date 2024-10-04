@@ -144,6 +144,7 @@ export default function PuntoDeVenta() {
         setSucursales(response.data.body);
         if (response.data.body.length > 0) {
           setSucursal(response.data.body[0].id.toString());
+          console.log(response.data.body)
         }
       } catch (err) {
         if (err instanceof Error) {
@@ -406,7 +407,7 @@ export default function PuntoDeVenta() {
         })
         setRecomendaciones(response.data.body)
         setArticulos(response.data.body)
-        
+        console.log(response.data.body)
       } catch (error) {
         console.error('Error al buscar artículos:', error)
         toast({
