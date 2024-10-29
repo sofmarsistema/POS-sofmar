@@ -8,6 +8,9 @@ import Sidebar from './views/modules/NavBar';
 import ResumenVentas from './views/ventas/ResumenVentas';
 import GestionInventario from './views/inventario/gestionInventario';
 import VentasDashboard from './views/dashboards/SalesDashboard';
+import Presupuestos from './views/presupuestos/Presupuestos';
+import { SwitchProvider } from './services/SwitchContext';
+import ConsultaPresupuestos from './views/presupuestos/ConsultaPresupuesto';
 
 
 const ProtectedLayout: React.FC = () => {
@@ -43,22 +46,26 @@ const ProtectedLayout: React.FC = () => {
 
 function App() {
   return (
-    <ChakraProvider>
+    <SwitchProvider>
+      <ChakraProvider>
       <AuthProvider>
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedLayout />}>
               <Route path="/punto-de-venta" element={<PuntoDeVenta />} />
-              <Route path="/resumen-de-ventas" element={<ResumenVentas />} />
+              <Route path="/consulta-de-ventas" element={<ResumenVentas />} />
               <Route path="/inventario" element={<GestionInventario/>} />
               <Route path="/dashboard" element={<VentasDashboard/>} />
+              <Route path='/presupuestos' element = {<Presupuestos/>}/>
+              <Route path='/consulta-de-presupuestos' element = {<ConsultaPresupuestos/>}/>
             </Route>
             <Route path="/" element={<Navigate to="/punto-de-venta" replace />} />
           </Routes>
         </Router>
       </AuthProvider>
     </ChakraProvider>
+    </SwitchProvider>
   );
 }
 

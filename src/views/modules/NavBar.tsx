@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Box, Flex, Icon, Text, Grid, GridItem, useMediaQuery, IconButton, Button } from '@chakra-ui/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ChartSpline, ShoppingCart, ScanSearch, Settings, CircleArrowUp, Users, CreditCard, LogOut, Archive } from 'lucide-react'
+import { ChartSpline, ShoppingCart, ScanSearch, CircleArrowUp, LogOut, Archive, SquareChartGantt, HandCoins, FilePen, DollarSign, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '@/services/AuthContext'
 
 interface NavItem {
@@ -9,23 +9,31 @@ interface NavItem {
   icon: React.ElementType
   path: string
   enabled: boolean
+  subItems?: NavItem[]
 }
 
 const NAV_ITEMS: NavItem[] = [
   { name: 'Dashboard', icon: ChartSpline, path: '/dashboard', enabled: true },
-  { name: 'Punto de venta', icon: ShoppingCart, path: '/punto-de-venta', enabled: true },
-  { name: 'Resumen de Ventas', icon: CreditCard, path: '/resumen-de-ventas', enabled: true },
+  { 
+    name: 'Ventas y Egresos', 
+    icon: DollarSign, 
+    path: '/ventas-y-egresos', 
+    enabled: true,
+    subItems: [
+      { name: 'Punto de venta', icon: ShoppingCart, path: '/punto-de-venta', enabled: true },
+      { name: 'Consulta de Ventas', icon: HandCoins, path: '/consulta-de-ventas', enabled: true },
+      { name: 'Presupuestos', icon: SquareChartGantt, path: '/presupuestos', enabled: true },
+      { name: 'Consulta de Presupuestos', icon: FilePen, path: '/consulta-de-presupuestos', enabled: true },
+    ]
+  },
   { name: 'Inventario', icon: Archive, path: '/inventario', enabled: true },
-  { name: 'Control de Caja', icon: Users, path: '/caja', enabled: false },
-  { name: 'Reportes', icon: Users, path: '/reportes', enabled: false },
-  { name: 'Empleados', icon: Settings, path: '/personal', enabled: false },
-  { name: 'Facturacion', icon: Settings, path: '/facturas', enabled: false },
 ]
 
 const Sidebar = () => {
   const [isLargerThan768] = useMediaQuery('(min-width: 768px)')
   const [isExpanded, setIsExpanded] = useState(false)
   const [isMobileExpanded, setIsMobileExpanded] = useState(false)
+  const [expandedItem, setExpandedItem] = useState<string | null>(null)
   const location = useLocation()
   const mobileBarRef = useRef<HTMLDivElement>(null)
   const {logout} = useAuth();
@@ -40,6 +48,7 @@ const Sidebar = () => {
   const handleMouseLeave = () => {
     if (isLargerThan768) {
       setIsExpanded(false)
+      setExpandedItem(null)
     }
   }
 
@@ -52,10 +61,15 @@ const Sidebar = () => {
     navigate('/login')
   };
 
+  const toggleItemExpansion = (itemName: string) => {
+    setExpandedItem(expandedItem === itemName ? null : itemName)
+  }
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (mobileBarRef.current && !mobileBarRef.current.contains(event.target as Node)) {
         setIsMobileExpanded(false)
+        setExpandedItem(null)
       }
     }
 
@@ -67,27 +81,82 @@ const Sidebar = () => {
 
   const renderNavItem = (item: NavItem) => (
     <GridItem key={item.name} borderTopLeftRadius="15px">
-      <Link to={item.enabled ? item.path : '#'} style={{ width: '100%', height: '100%', pointerEvents: item.enabled ? 'auto' : 'none' }}>
-        <Flex
-          direction="column"
-          align="center"
-          justify="center"
-          h="100%"
-          px={2}
-          py={2}
-          mx={2}
-          my={4}
-          borderRadius={'8px'}
-          transition="all 0.3s"
-          className={item.enabled ? 'hover:scale-125' : ''}
-          opacity={item.enabled ? 1 : 0.5}
-        >
-          <Icon as={item.icon} boxSize={6} color={location.pathname === item.path && item.enabled ? 'blue.500' : 'black'} />
-          <Text fontSize="xs" mt={1} textAlign="center" color="black">
-            {isLargerThan768 ? (isExpanded ? item.name : '') : item.name}
-          </Text>
-        </Flex>
-      </Link>
+      {item.subItems ? (
+        <Box>
+          <Flex
+            direction="column"
+            align="center"
+            justify="center"
+            h="100%"
+            px={2}
+            pt={2}
+            mx={2}
+            mt={4}
+            borderRadius={'8px'}
+            transition="all 0.3s"
+            className={item.enabled ? 'hover:bg-blue-100' : ''}
+            opacity={item.enabled ? 1 : 0.5}
+            onClick={() => toggleItemExpansion(item.name)}
+            cursor="pointer"
+          >
+            <Icon as={item.icon} boxSize={6} color="black" />
+            <Text fontSize="xs" mt={1} textAlign="center" color="black">
+              {isLargerThan768 ? (isExpanded ? item.name : '') : item.name}
+            </Text>
+            {(isExpanded || !isLargerThan768) && (
+              <Icon as={expandedItem === item.name ? ChevronUp : ChevronDown} boxSize={4} color="black" mt={1} />
+            )}
+          </Flex>
+          {expandedItem === item.name && (
+            <Box ml={isLargerThan768 && isExpanded ? 4 : 0}>
+              {item.subItems.map((subItem) => (
+                <Link key={subItem.name} to={subItem.path} style={{ width: '100%', height: '100%', pointerEvents: subItem.enabled ? 'auto' : 'none' }}>
+                  <Flex
+                    align="center"
+                    px={2}
+                    py={2}
+                    mx={2}
+                    my={1}
+                    borderRadius={'8px'}
+                    transition="all 0.3s"
+                    className={subItem.enabled ? 'hover:bg-blue-100' : ''}
+                    opacity={subItem.enabled ? 1 : 0.5}
+                  >
+                    <Icon as={subItem.icon} boxSize={4} color={location.pathname === subItem.path && subItem.enabled ? 'blue.500' : 'black'} mr={2} />
+                    {(isExpanded || !isLargerThan768) && (
+                      <Text fontSize="md" color="black">
+                        {subItem.name}
+                      </Text>
+                    )}
+                  </Flex>
+                </Link>
+              ))}
+            </Box>
+          )}
+        </Box>
+      ) : (
+        <Link to={item.enabled ? item.path : '#'} style={{ width: '100%', height: '100%', pointerEvents: item.enabled ? 'auto' : 'none' }}>
+          <Flex
+            direction="column"
+            align="center"
+            justify="center"
+            h="100%"
+            px={2}
+            py={2}
+            mx={2}
+            my={4}
+            borderRadius={'8px'}
+            transition="all 0.3s"
+            className={item.enabled ? 'hover:bg-blue-100' : ''}
+            opacity={item.enabled ? 1 : 0.5}
+          >
+            <Icon as={item.icon} boxSize={6} color={location.pathname === item.path && item.enabled ? 'blue.500' : 'black'} />
+            <Text fontSize="xs" mt={1} textAlign="center" color="black">
+              {isLargerThan768 ? (isExpanded ? item.name : '') : item.name}
+            </Text>
+          </Flex>
+        </Link>
+      )}
     </GridItem>
   )
 
@@ -147,19 +216,19 @@ const Sidebar = () => {
           <Grid templateColumns="repeat(4, 1fr)" h="60px">
             {NAV_ITEMS.slice(0, 2).map((item) => (
               <GridItem key={item.name}>
-                <Link to={item.enabled ? item.path : '#'} style={{ width: '100%', height: '100%', pointerEvents: item.enabled ? 'auto' : 'none' }}>
-                  <Flex
-                    direction="column"
-                    align="center"
-                    justify="center"
-                    h="100%"
-                    _hover={{ bg: 'blue.100' }}
-                    transition="all 0.3s"
-                    opacity={item.enabled ? 1 : 0.5}
-                  >
-                    <Icon as={item.icon} boxSize={6} color={location.pathname === item.path && item.enabled ? 'blue.500' : 'black'} />
-                  </Flex>
-                </Link>
+                <Flex
+                  direction="column"
+                  align="center"
+                  justify="center"
+                  h="100%"
+                  _hover={{ bg: 'blue.100' }}
+                  transition="all 0.3s"
+                  opacity={item.enabled ? 1 : 0.5}
+                  onClick={() => item.subItems ? toggleItemExpansion(item.name) : navigate(item.path)}
+                  cursor="pointer"
+                >
+                  <Icon as={item.icon} boxSize={6} color={location.pathname === item.path && item.enabled ? 'blue.500' : 'black'} />
+                </Flex>
               </GridItem>
             ))}
             <GridItem>
@@ -219,7 +288,7 @@ const Sidebar = () => {
             p={2}
             direction={'column'}
             onClick={handleLogout}
-            _hover={{ color: 'green.100', cursor: 'pointer' }}
+            _hover={{ color: 'red.500', cursor: 'pointer' }}
           >
             <LogOut />
             {isExpanded && <Text mt={1}>Cerrar Sesión</Text>}

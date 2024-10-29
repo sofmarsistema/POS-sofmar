@@ -212,7 +212,7 @@ export default function ResumenVentas() {
       <VStack spacing={4} align="stretch">
       <Flex bgGradient="linear(to-r, blue.500, blue.600)" color="white" p={isMobile ? 4 : 6} alignItems="center" rounded="lg">
           <HandCoins size={32} className='mr-2' />
-          <Heading size={isMobile ? 'sm' : 'md'}>Resumen de Ventas</Heading>
+          <Heading size={isMobile ? 'sm' : 'md'}>Consulta de Ventas</Heading>
       </Flex>
         
         <HStack spacing={4}>
@@ -268,7 +268,7 @@ export default function ResumenVentas() {
           </TabList>
         </Tabs>
 
-        <Box height={'600px'} overflowY={'auto'} width={'90vw'}>
+  <Box height={'600px'} overflowY={'auto'} maxWidth={'90vw'} overflowX={'auto'}>
   <Table variant="simple">
     <Thead bg={'blue.100'}>
       <Tr>

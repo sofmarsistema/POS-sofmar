@@ -17,6 +17,7 @@ import {
 } from '@chakra-ui/react';
 import { LockIcon, AtSignIcon } from '@chakra-ui/icons';
 import { api_url } from '@/utils';
+import Auditar from '@/services/AuditoriaHook';
 
 const Login: React.FC = () => {
   const [usuario, setUsuario] = useState('');
@@ -24,6 +25,7 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+  const userID = parseInt(localStorage.getItem('user_id') || '0');
 
   const ingresar = async () => {
     try {
@@ -32,9 +34,14 @@ const Login: React.FC = () => {
         pass: password,
       });
 
+      console.log('Login response:', response.data.body);
       login(response.data.body);
-      navigate('/punto-de-venta');
+      navigate('/dashboard');
+      
+      console.log('Calling Auditar with params:', 10, 4, userID, 0, 'Inicio de Sesión desde la web');
+      Auditar(10, 4, userID, 0, 'Inicio de Sesión desde la web');
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: 'Credenciales Incorrectas',
         description: 'Verifique los datos e intente nuevamente',
