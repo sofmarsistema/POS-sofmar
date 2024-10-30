@@ -204,16 +204,18 @@ export default function PuntoDeVenta() {
   const articuloRef = useRef<HTMLInputElement>(null);
   const cantidadRef = useRef<HTMLInputElement>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [ventaFinalizada, setVentaFinalizada] = useState<any>(null);
-  const [detalleVentaFinalizada, setDetalleVentaFinalizada] = useState<any[]>(
+  const [, setVentaFinalizada] = useState<any>(null);
+  const [, setDetalleVentaFinalizada] = useState<any[]>(
     []
   );
-  const [clienteInfo, setClienteInfo] = useState<any>(null);
-  const [sucursalInfo, setSucursalInfo] = useState<any>(null);
-  const [vendedorInfo, setVendedorInfo] = useState<any>(null);
+  const [, setClienteInfo] = useState<any>(null);
+  const [, setSucursalInfo] = useState<any>(null);
+  const [, setVendedorInfo] = useState<any>(null);
 
   const [isPresupuestoModalOpen, setIsPresupuestoModalOpen] = useState(false)
   const [presupuestoSeleccionado, setPresupuestoSeleccionado] = useState<Presupuesto | null>(null)
+  const [presupuestoOriginalItems, setPresupuestoOriginalItems] = useState<DetallePresupuesto[]>([]);
+
 
   const operadorActual = localStorage.getItem("user_id");
   // Funciones y Effects para traer los datos//
@@ -651,11 +653,11 @@ export default function PuntoDeVenta() {
           ? items.reduce((acc, item) => acc + item.subtotal, 0) *
             (descuentoValor / 100)
           : descuentoValor,
-      ve_vendedor: (() => {
-      const normalize = (str: string) => str.toLowerCase().trim();
-      const vendedor = vendedores.find(v => normalize(v.op_nombre) === normalize(operador));
-      return vendedor ? vendedor.op_codigo : 1;
-    })(),
+          ve_vendedor: (() => {
+            const normalize = (str: string) => typeof str === 'string' ? str.toLowerCase().trim() : '';
+            const vendedor = vendedores.find(v => normalize(v.op_nombre) === normalize(operador));
+            return vendedor ? vendedor.op_codigo : 1;
+        })(),
       ve_hora: horaLocal,
     },
     detalle_ventas: items.map((item) => {
@@ -849,7 +851,20 @@ export default function PuntoDeVenta() {
           operadorActual ? parseInt(operadorActual) : 0,
           `Venta ID ${newSaleID} realizada por ${operador} en la sucursal ${sucursal} por un total de ${calcularTotal()}`
         );
-        confirmarPresupuesto();
+
+        
+        if (presupuestoSeleccionado) {
+          const itemsEliminados = presupuestoOriginalItems.filter(itemOriginal => 
+            !items.some(item => item.id === itemOriginal.art_codigo)
+          );
+
+          if (itemsEliminados.length > 0) {
+            await actualizarPresupuestoParcial(itemsEliminados);
+          } else {
+            await confirmarPresupuesto();
+          }
+        }
+
         toast({
           title: "Venta finalizada",
           description: "La venta se ha guardado correctamente",
@@ -980,21 +995,18 @@ export default function PuntoDeVenta() {
   }
 
   const confirmarPresupuesto = async () => {
-    try{
-      const response = await axios.post(`${api_url}/presupuestos/confirmarPresupuesto/?cod=${presupuestoSeleccionado?.codigo}`);
-      console.log(response);
-    }
-    catch(error){
-      console.error("Error al confirmar el presupuesto:", error);
-      toast({
-        title: "Error",
-        description: "Ha ocurrido un error al confirmar el presupuesto",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
+    try {
+      const codigo = presupuestoSeleccionado?.codigo;
+      console.log('Código de presupuesto:', codigo); // Para verificar el valor
+  
+      const response = await axios.post(`${api_url}presupuestos/confirmarPresupuesto`, {
+        id: codigo
       });
-  }
-  }
+      console.log(response);
+    } catch (error) {
+      console.error('Error al confirmar el presupuesto:', error);
+    }
+  };
 
   const handleSelectPresupuesto = async (presupuesto: Presupuesto) => {
     try {
@@ -1005,6 +1017,8 @@ export default function PuntoDeVenta() {
       console.log(detalles);
   
       setPresupuestoSeleccionado(presupuesto);
+      setPresupuestoOriginalItems(detalles);
+
       setClienteSeleccionado(clientes.find(c => c.cli_codigo === presupuesto.codcliente) || null);
       setClienteBusqueda(presupuesto.cliente);
       setSucursal(presupuesto.codsucursal.toString());
@@ -1061,6 +1075,49 @@ export default function PuntoDeVenta() {
     }
   };
 
+  const actualizarPresupuestoParcial = async (itemsEliminados: any[]) => {
+    if (!presupuestoSeleccionado) {
+      toast({
+        title: "Error",
+        description: "No hay un presupuesto seleccionado para actualizar",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${api_url}presupuestos/actualizarParcial`, {
+        codigo: presupuestoSeleccionado.codigo,
+        items: itemsEliminados.map(item => ({
+          art_codigo: item.art_codigo,
+          cantidad: item.cantidad
+        }))
+      });
+
+      if (response.data.success) {
+        toast({
+          title: "Presupuesto actualizado",
+          description: "El presupuesto ha sido actualizado con los items restantes",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        throw new Error(response.data.message || "Error al actualizar el presupuesto");
+      }
+    } catch (error) {
+      console.error("Error al actualizar el presupuesto parcialmente:", error);
+      toast({
+        title: "Error",
+        description: "Hubo un problema al actualizar el presupuesto",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   return (
     <div>

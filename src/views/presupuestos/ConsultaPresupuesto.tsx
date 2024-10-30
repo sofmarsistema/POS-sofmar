@@ -77,8 +77,8 @@ const periodos = [
 ]
 
 interface ConsultaPresupuestosProps {
-  onSelectPresupuesto: (presupuesto: Presupuesto, detalles: DetallePresupuesto[]) => void
-  onClose: () => void
+  onSelectPresupuesto?: (presupuesto: Presupuesto, detalles: DetallePresupuesto[]) => void
+  onClose?: () => void
   isModal?: boolean
 }
 
@@ -93,7 +93,7 @@ export default function ConsultaPresupuestos({ onSelectPresupuesto, onClose, isM
   const [idFiltro, setIdFiltro] = useState('')
   const [detallePresupuesto, setDetallePresupuesto] = useState<DetallePresupuesto[]>([])
   const [presupuestoSeleccionado, setPresupuestoSeleccionado] = useState<number | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [, setIsLoading] = useState(false)
   const toast = useToast()
   const [isMobile] = useMediaQuery('(max-width: 48em)')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -213,8 +213,12 @@ export default function ConsultaPresupuestos({ onSelectPresupuesto, onClose, isM
   }
 
   const handleSelectPresupuesto = (presupuesto: Presupuesto) => {
-    onSelectPresupuesto(presupuesto, detallePresupuesto)
-    onClose()
+    if (onSelectPresupuesto) {
+      onSelectPresupuesto(presupuesto, detallePresupuesto);
+    }
+    if (onClose) {
+      onClose();
+    }
   }
 
   return (

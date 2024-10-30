@@ -295,8 +295,6 @@ export default function Presupuestos() {
                 return { impuesto5: 0, impuesto10: 0, exentas: precio };
             default:
                 return { impuesto5: 0, impuesto10: 0, exentas: 0 };
-
-
         }
     }
 
