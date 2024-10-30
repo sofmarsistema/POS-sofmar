@@ -1,76 +1,95 @@
 import React, { useState } from 'react';
-import { supabase } from '../../utils/supabase'; // Importar cliente de Supabase
-import { Box, Button, Center, Heading, Input, Text } from '@chakra-ui/react';
+import axios from 'axios';
+import { useAuth } from '../../services/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Box, 
+  Button, 
+  Container, 
+  FormControl, 
+  Input, 
+  VStack, 
+  Heading, 
+  Text, 
+  InputGroup, 
+  InputLeftElement,
+  useToast
+} from '@chakra-ui/react';
+import { LockIcon, AtSignIcon } from '@chakra-ui/icons';
+import { api_url } from '@/utils';
+import Auditar from '@/services/AuditoriaHook';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [usuario, setUsuario] = useState('');
+  const [password, setPassword] = useState('');
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const userID = parseInt(localStorage.getItem('user_id') || '0');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const ingresar = async () => {
+    try {
+      const response = await axios.post(`${api_url}usuarios/login`, {
+        user: usuario,
+        pass: password,
+      });
 
-    // Intentar iniciar sesión
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError('Error al iniciar sesión: ' + error.message);
+      console.log('Login response:', response.data.body);
+      login(response.data.body);
+      navigate('/dashboard');
+      
+      console.log('Calling Auditar with params:', 10, 4, userID, 0, 'Inicio de Sesión desde la web');
+      Auditar(10, 4, userID, 0, 'Inicio de Sesión desde la web');
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: 'Credenciales Incorrectas',
+        description: 'Verifique los datos e intente nuevamente',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
   return (
-    <Center className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-12">
-        <Heading as="h2" size="lg" mb={4} textAlign="center" className='text-3xl font-bold tracking-tight text-foreground'>
-          Iniciar Sesión
-        </Heading>
-        <Text className='my-2 mb-4 text-gray-500'>Ingresa tu correo y Contraseña en el formulario</Text>
-      <Box
-        className="shadow-lg px-4 py-12 bg-white rounded-lg md:w-1/3 sm:w-full border"
-        borderRadius="lg"
-        boxShadow="md"
-      >
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="mb-4 w-full border rounded-lg p-0.5"
-            />
-          </div>
-          <div>
-            <Input
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="mb-4 w-full border rounded-lg p-0.5"
-            />
-          </div>
-          {error && (
-            <Text color="red.500" textAlign="center" mb={2}>
-              {error}
-            </Text>
-          )}
-          <Button
-            type="submit"
-            colorScheme="blue"
-            width="100%"
-            className="mt-2 w-full bg-blue-500 p-1 rounded-lg text-white font-bold"
-
-          >
-            Iniciar sesión
+    <Container maxW="md" centerContent>
+      <Box padding="8" bg="white" boxShadow="md" borderRadius="lg" width="100%" mt="20">
+        <VStack spacing="6">
+          <Heading size="lg">Iniciar Sesión</Heading>
+          <Text fontSize="sm" color="gray.500">Ingrese sus credenciales para acceder</Text>
+          <FormControl>
+            <InputGroup>
+              <InputLeftElement pointerEvents="none">
+                <AtSignIcon color="gray.300" />
+              </InputLeftElement>
+              <Input
+                type="text"
+                placeholder="Usuario"
+                value={usuario}
+                onChange={(e) => setUsuario(e.target.value)}
+              />
+            </InputGroup>
+          </FormControl>
+          <FormControl>
+            <InputGroup>
+              <InputLeftElement pointerEvents="none">
+                <LockIcon color="gray.300" />
+              </InputLeftElement>
+              <Input
+                type="password"
+                placeholder="Contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </InputGroup>
+          </FormControl>
+          <Button colorScheme="blue" width="100%" onClick={ingresar}>
+            Ingresar
           </Button>
-        </form>
+        </VStack>
       </Box>
-    </Center>
+    </Container>
   );
 };
 

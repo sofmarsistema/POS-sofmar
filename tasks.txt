@@ -1,0 +1,3 @@
+cerrar la ventana para volver al dashboard
+agregar item
+view de clientes
